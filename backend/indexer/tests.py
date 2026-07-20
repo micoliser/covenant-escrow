@@ -17,11 +17,12 @@ from indexer.sync import (
     _release_sync_lock,
     _sync_single_dao,
     _sync_single_proposal,
+    _sync_proposal_votes,
     run_full_sync,
     sync_entity,
 )
 from daos.models import DaoCache, TreasuryStatsSnapshot
-from proposals.models import ProposalCache, ProposalAuditLogEntry
+from proposals.models import ProposalCache, ProposalAuditLogEntry, VoteCache
 from users.models import User
 
 from rest_framework.test import APIClient
@@ -84,6 +85,16 @@ def make_proposal_chain_data(proposal_id=0, dao_id=0, **overrides):
     data.update(overrides)
     return data
 
+
+def make_vote_chain_data(support=True, weight=1000, voted_at=1700000000, **overrides):
+    """Return a dict shaped like CovenantEscrow.get_vote() output."""
+    data = {
+        "support": support,
+        "weight": weight,
+        "voted_at": voted_at,
+    }
+    data.update(overrides)
+    return data
 
 # ===========================================================================
 # Model Tests
@@ -247,6 +258,12 @@ class DaoSyncDiffTest(TransactionTestCase):
 
 
 class ProposalSyncDiffTest(TransactionTestCase):
+    def setUp(self):
+        super().setUp()
+        patcher = patch('indexer.sync._fetch_voters_from_chain', return_value=[])
+        self.addCleanup(patcher.stop)
+        patcher.start()
+
     @patch('indexer.sync._fetch_proposal_from_chain')
     def test_new_proposal_inserted(self, mock_fetch):
         chain_data = make_proposal_chain_data(proposal_id=0)
@@ -335,11 +352,55 @@ class ProposalSyncDiffTest(TransactionTestCase):
         self.assertEqual(snapshots.count(), 1)
 
 
+class VoteSyncDiffTest(TransactionTestCase):
+    @patch('indexer.sync._fetch_vote_from_chain')
+    @patch('indexer.sync._fetch_voters_from_chain')
+    def test_new_votes_inserted_and_updated_safely(self, mock_get_voters, mock_get_vote):
+        """sync_proposal_votes should fetch all voters and upsert VoteCache properly."""
+        voter_address = "0xvoter1"
+        
+        mock_get_voters.return_value = [voter_address]
+        
+        def mock_fetch_vote(prop_id, v_type, addr):
+            if v_type == "fund":
+                return make_vote_chain_data(support=True, weight=2000)
+            return None # no reclaim vote yet
+            
+        mock_get_vote.side_effect = mock_fetch_vote
+
+        # Run sync for round 0
+        _sync_proposal_votes(0, reclaim_round=0)
+
+        self.assertEqual(VoteCache.objects.count(), 1)
+        vote = VoteCache.objects.get(proposal_id=0, voter_address=voter_address, vote_type="fund", reclaim_round=0)
+        self.assertEqual(vote.weight, Decimal("2000"))
+        self.assertTrue(vote.support)
+
+        # Simulate update to same vote (which technically shouldn't happen on-chain, but tests atomic upsert)
+        def mock_fetch_vote_updated(prop_id, v_type, addr):
+            if v_type == "fund":
+                return make_vote_chain_data(support=True, weight=5000)
+            return None
+        mock_get_vote.side_effect = mock_fetch_vote_updated
+
+        _sync_proposal_votes(0, reclaim_round=0)
+        
+        self.assertEqual(VoteCache.objects.count(), 1)
+        vote.refresh_from_db()
+        self.assertEqual(vote.weight, Decimal("5000"))
+
+
 # ===========================================================================
 # Full Sync Tests (beat tick integration)
 # ===========================================================================
 
 class FullSyncTest(TransactionTestCase):
+    def setUp(self):
+        super().setUp()
+        patcher = patch('indexer.sync._fetch_voters_from_chain', return_value=[])
+        self.addCleanup(patcher.stop)
+        patcher.start()
+
     @patch('indexer.sync._fetch_proposal_from_chain')
     @patch('indexer.sync._fetch_dao_from_chain')
     @patch('indexer.sync._fetch_proposal_count_from_chain')
@@ -393,6 +454,12 @@ class FullSyncTest(TransactionTestCase):
 # ===========================================================================
 
 class SyncEntityTest(TransactionTestCase):
+    def setUp(self):
+        super().setUp()
+        patcher = patch('indexer.sync._fetch_voters_from_chain', return_value=[])
+        self.addCleanup(patcher.stop)
+        patcher.start()
+
     @patch('indexer.sync._fetch_proposal_from_chain')
     def test_sync_entity_proposal(self, mock_fetch):
         """sync_entity should sync a single proposal without creating TreasuryStatsSnapshot."""

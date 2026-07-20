@@ -16,9 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from proposals.views import CommentDestroyView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/daos/', include('daos.urls')),
+    path('api/proposals/', include('proposals.urls')),
+    path('api/comments/<int:pk>/', CommentDestroyView.as_view(), name='comment-delete'),
     path('api/indexer/', include('indexer.urls')),
     path('auth/', include('users.urls')),
 ]

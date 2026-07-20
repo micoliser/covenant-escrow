@@ -117,6 +117,11 @@ class CovenantEscrow(gl.Contract):
     voting_power: TreeMap[str, u256]
     # votes keyed by "{proposal_id}:{vote_type}:{address_hex}"
     votes: TreeMap[str, VoteRecord]
+    # has_voted keyed by "{proposal_id}:{address_hex}" to prevent duplicate voter array entries
+    has_voted: TreeMap[str, bool]
+    # proposal_voters keyed by "{proposal_id}:{index}"
+    proposal_voters: TreeMap[str, Address]
+    proposal_voter_counts: TreeMap[u256, u256]
 
     # ===================================================================
     # Constructor  (§4 — Setup)
@@ -506,6 +511,14 @@ class CovenantEscrow(gl.Contract):
             weight=weight,
             voted_at=now,
         )
+
+        # Track unique voters per proposal for the indexer
+        has_voted_key = f"{proposal_id}:{sender.as_hex}"
+        if not self.has_voted.get(has_voted_key, False):
+            count = self.proposal_voter_counts.get(proposal_id, 0)
+            self.proposal_voters[f"{proposal_id}:{count}"] = sender
+            self.proposal_voter_counts[proposal_id] = count + 1
+            self.has_voted[has_voted_key] = True
 
         # Update the tally on the proposal
         if vote_type == VOTE_TYPE_FUND:
@@ -956,6 +969,20 @@ nothing else:
             "weight": record.weight,
             "voted_at": record.voted_at,
         }
+
+    @gl.public.view
+    def get_voters(self, proposal_id: u256) -> list[Address]:
+        """
+        Return a list of all addresses that have cast at least one vote 
+        (fund or reclaim) on this proposal.
+        """
+        count = self.proposal_voter_counts.get(proposal_id, 0)
+        voters = []
+        for i in range(count):
+            voter = self.proposal_voters.get(f"{proposal_id}:{i}", None)
+            if voter is not None:
+                voters.append(voter)
+        return voters
 
     # ===================================================================
     # Internal helpers

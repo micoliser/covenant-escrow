@@ -312,8 +312,13 @@ class AuthConcurrencyTests(TransactionTestCase):
             def make_request():
                 from rest_framework.test import APIClient
                 from django.urls import reverse
-                client = APIClient()
-                return client.post(reverse('auth_verify'), payload)
+                from django.db import connections
+                try:
+                    client = APIClient()
+                    return client.post(reverse('auth_verify'), payload)
+                finally:
+                    connections.close_all()
+                
                 
             results = []
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:

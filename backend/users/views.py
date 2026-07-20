@@ -11,8 +11,12 @@ from rest_framework_simplejwt.tokens import AccessToken
 from eth_account import Account
 from eth_account.messages import encode_defunct
 from siwe import SiweMessage
+from django.shortcuts import get_object_or_404
+from rest_framework import generics
 
 from .models import User, AuthNonce, RefreshToken
+from proposals.models import Notification
+from .serializers import NotificationSerializer
 
 class NonceView(APIView):
     def post(self, request):
@@ -154,3 +158,22 @@ class LogoutView(APIView):
             return Response({"status": "logged out"})
         except RefreshToken.DoesNotExist:
             return Response({"error": "Invalid refresh token"}, status=status.HTTP_400_BAD_REQUEST)
+
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+
+class NotificationReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk=None):
+        notification = get_object_or_404(Notification, pk=pk)
+        if notification.user != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        
+        notification.read_at = timezone.now()
+        notification.save(update_fields=['read_at'])
+        return Response({'status': 'read'})

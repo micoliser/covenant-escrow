@@ -526,6 +526,28 @@ class TestCastVote:
         vote = contract.get_vote(args=[pid, "fund", accounts[0].address]).call()
         assert vote["support"] is True
 
+    def test_get_voters_returns_unique_list(self):
+        ctx = _mock_tx_context(screening_mocks(approved=True))
+        contract = deploy_contract(tx_ctx=ctx)
+        deposit(contract, accounts[0], 0, 10_000, tx_ctx=ctx)
+        deposit(contract, accounts[2], 0, 5_000, tx_ctx=ctx)
+        pid = open_proposal(contract, accounts[1], amount=1000, tx_ctx=ctx)
+        
+        # account 0 votes fund
+        contract.connect(accounts[0]).cast_vote(args=[pid, "fund", True]).transact(transaction_context=ctx)
+        
+        voters = contract.get_voters(args=[pid]).call()
+        assert len(voters) == 1
+        assert voters[0] == accounts[0].address
+
+        # account 2 votes fund
+        contract.connect(accounts[2]).cast_vote(args=[pid, "fund", False]).transact(transaction_context=ctx)
+        
+        voters = contract.get_voters(args=[pid]).call()
+        assert len(voters) == 2
+        assert accounts[0].address in voters
+        assert accounts[2].address in voters
+
     def test_double_vote_rejected(self):
         ctx = _mock_tx_context(screening_mocks(approved=True))
         contract = deploy_contract(tx_ctx=ctx)

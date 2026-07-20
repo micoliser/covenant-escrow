@@ -19,7 +19,7 @@ from eth_account import Account
 
 from indexer.models import RawStateSnapshot, SyncCursor
 from daos.models import DaoCache, TreasuryStatsSnapshot
-from proposals.models import ProposalCache, ProposalAuditLogEntry
+from proposals.models import ProposalCache, ProposalAuditLogEntry, VoteCache
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +79,26 @@ def _fetch_proposal_from_chain(proposal_id: int) -> dict:
     )
 
 
+def _fetch_voters_from_chain(proposal_id: int) -> list:
+    """Call CovenantEscrow.get_voters(proposal_id) on studionet."""
+    client = _get_genlayer_client()
+    return client.read_contract(
+        address=settings.GENLAYER_CONTRACT_ADDRESS,
+        function_name="get_voters",
+        args=[proposal_id]
+    )
+
+
+def _fetch_vote_from_chain(proposal_id: int, vote_type: str, address: str) -> dict:
+    """Call CovenantEscrow.get_vote(...) on studionet."""
+    client = _get_genlayer_client()
+    return client.read_contract(
+        address=settings.GENLAYER_CONTRACT_ADDRESS,
+        function_name="get_vote",
+        args=[proposal_id, vote_type, address]
+    )
+
+
 # ---------------------------------------------------------------------------
 # Sync Lock
 # ---------------------------------------------------------------------------
@@ -127,6 +147,48 @@ def _release_sync_lock():
 # ---------------------------------------------------------------------------
 # Single-entity sync (used by both full sync and out-of-cycle resync)
 # ---------------------------------------------------------------------------
+
+def _sync_proposal_votes(proposal_id: int, reclaim_round: int):
+    """
+    Fetch the list of voters for a proposal, then fetch each vote (fund & reclaim)
+    and upsert into VoteCache with atomic locking.
+    """
+    voters = _fetch_voters_from_chain(proposal_id)
+    if not voters:
+        return
+        
+    for voter_address in voters:
+        for vote_type in ["fund", "reclaim"]:
+            chain_vote = _fetch_vote_from_chain(proposal_id, vote_type, voter_address)
+            if chain_vote is not None:
+                vote_round = reclaim_round if vote_type == "reclaim" else 0
+                with transaction.atomic():
+                    try:
+                        existing = (
+                            VoteCache.objects
+                            .select_for_update()
+                            .get(
+                                proposal_id=proposal_id,
+                                voter_address=voter_address,
+                                vote_type=vote_type,
+                                reclaim_round=vote_round
+                            )
+                        )
+                        existing.support = chain_vote["support"]
+                        existing.weight = Decimal(str(chain_vote["weight"]))
+                        existing.voted_at = _timestamp_to_datetime(chain_vote["voted_at"])
+                        existing.save()
+                    except VoteCache.DoesNotExist:
+                        VoteCache.objects.create(
+                            proposal_id=proposal_id,
+                            voter_address=voter_address,
+                            vote_type=vote_type,
+                            reclaim_round=vote_round,
+                            support=chain_vote["support"],
+                            weight=Decimal(str(chain_vote["weight"])),
+                            voted_at=_timestamp_to_datetime(chain_vote["voted_at"]),
+                        )
+
 
 def _sync_single_dao(dao_id: int, trigger_source: str = "celery_beat"):
     """
@@ -274,6 +336,8 @@ def _sync_single_proposal(proposal_id: int, trigger_source: str = "celery_beat")
                 reclaim_vote_ends_at=_timestamp_to_datetime_or_none(chain_data["reclaim_vote_ends_at"]),
             )
             # No audit log for first-ever insertion — there's no "from" status
+
+    _sync_proposal_votes(proposal_id, chain_data["reclaim_round"])
 
     snapshot.processed = True
     snapshot.save(update_fields=['processed'])
