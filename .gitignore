@@ -1,0 +1,89 @@
+# ==========================
+# Backend (Python / Django)
+# ==========================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+backend/env/
+
+# Django stuff
+db.sqlite3
+db.sqlite3-journal
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# Environments and Secrets
+.env
+.env.local
+.env.*.local
+*.env
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ==========================
+# Frontend (Node / Next.js / React)
+# ==========================
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production / Build
+.next/
+out/
+build/
+dist/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==========================
+# GenLayer / Smart Contracts
+# ==========================
+# (Add any specific build outputs or local caches if they exist for genlayer-js / genlayer-py)
+
+# ==========================
+# OS / IDE / General
+# ==========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.project
+.classpath
+
+# ==========================
+# Design Specs
+# ==========================
+*design_spec.md
+*flow_and_design.md
+
+# ==========================
+# Antigravity / Agents
+# ==========================
+.agents/
+.system_generated/

@@ -1,0 +1,18 @@
+networks:
+  default: studionet
+
+  localnet:
+    url: "http://127.0.0.1:4000/api"
+
+  # Hosted GenLayer Studio backend (bypasses broken local genvm).
+  # leader_only: single-validator execution — avoids NO_MAJORITY / stuck
+  # PROPOSING timeouts common on multi-validator Studio consensus under load.
+  studionet:
+    leader_only: true
+
+paths:
+  # Contract source lives at contract/covenant_escrow.py (this config's directory),
+  # not under a nested contracts/ folder.
+  contracts: "."
+
+environment: .env

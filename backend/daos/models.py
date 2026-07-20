@@ -1,0 +1,29 @@
+from django.db import models
+from django.utils import timezone
+
+class DaoCache(models.Model):
+    dao_id = models.BigIntegerField(primary_key=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    admin = models.CharField(max_length=42)
+    quorum_bps = models.IntegerField()
+    approval_threshold_bps = models.IntegerField()
+    voting_period_seconds = models.IntegerField()
+    funding_cap_bps = models.IntegerField()
+    max_resubmissions = models.IntegerField()
+    min_criteria_length = models.IntegerField()
+    total_balance = models.DecimalField(max_digits=78, decimal_places=0, default=0)
+    total_voting_power = models.DecimalField(max_digits=78, decimal_places=0, default=0)
+    proposal_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    last_synced_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class TreasuryStatsSnapshot(models.Model):
+    dao_id = models.BigIntegerField()
+    total_balance = models.DecimalField(max_digits=78, decimal_places=0)
+    member_count = models.IntegerField(default=0)
+    active_proposal_count = models.IntegerField(default=0)
+    snapshot_at = models.DateTimeField(default=timezone.now)
