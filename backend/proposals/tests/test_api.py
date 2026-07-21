@@ -56,13 +56,13 @@ class ProposalAPITests(APITestCase):
         url = '/api/proposals/'
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['results']), 2)
 
     def test_filter_proposals(self):
         url = '/api/proposals/?status=1'
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
     def test_search_proposals(self):
         # We need to manually set the search vector in tests if not using a trigger
@@ -72,7 +72,7 @@ class ProposalAPITests(APITestCase):
         url = '/api/proposals/?search=Bug'
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['results']), 2)
 
     def test_proposal_history(self):
         url = '/api/proposals/1/history/'

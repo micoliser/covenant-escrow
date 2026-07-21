@@ -4,6 +4,7 @@ from rest_framework import status
 from django.utils import timezone
 from daos.models import DaoCache
 from decimal import Decimal
+from unittest.mock import patch
 
 class DaoAPITests(APITestCase):
     def setUp(self):
@@ -40,8 +41,8 @@ class DaoAPITests(APITestCase):
         url = '/api/daos/'
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['name'], "Alpha DAO")
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['name'], "Alpha DAO")
 
     def test_retrieve_dao_public(self):
         url = f'/api/daos/{self.dao1.dao_id}/'
@@ -70,12 +71,40 @@ class DaoAPITests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_voting_power_authorized(self):
+    @patch('indexer.sync._get_genlayer_client')
+    def test_voting_power_authorized(self, mock_get_client):
         url = '/api/daos/1/voting-power/me/'
         self.client.force_authenticate(user=self.user)
+        mock_get_client.return_value.read_contract.return_value = 100
         response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('voting_power', response.data)
+        self.assertEqual(response.data['voting_power'], "100")
+
+    @patch('indexer.sync._sync_single_dao')
+    @patch('indexer.sync._get_genlayer_client')
+    def test_voting_power_cache_invalidation(self, mock_get_client, mock_sync_single_dao):
+        url = '/api/daos/1/voting-power/me/'
+        self.client.force_authenticate(user=self.user)
+
+        # 1. First call caches "100"
+        mock_get_client.return_value.read_contract.return_value = 100
+        response1 = self.client.get(url)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(response1.data['voting_power'], "100")
+
+        # 2. Change mock to "200" but don't clear cache yet. 
+        # A direct call should still return cached "100".
+        mock_get_client.return_value.read_contract.return_value = 200
+        response2 = self.client.get(url)
+        self.assertEqual(response2.data['voting_power'], "100")
+
+        # 3. Simulate sync-request which invalidates the cache
+        from indexer.sync import sync_entity
+        sync_entity("dao", 1, self.user.wallet_address)
+
+        # 4. Third call should fetch fresh data "200"
+        response3 = self.client.get(url)
+        self.assertEqual(response3.data['voting_power'], "200")
 
     def test_treasury_stats(self):
         url = '/api/daos/1/treasury/stats/'

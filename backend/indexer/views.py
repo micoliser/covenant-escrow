@@ -48,7 +48,7 @@ class SyncRequestView(APIView):
         entity_id = serializer.validated_data['entity_id']
 
         try:
-            sync_entity(entity_type, entity_id)
+            sync_entity(entity_type, entity_id, request.user.wallet_address)
         except Exception:
             logger.exception(
                 "Sync-request failed for %s#%d", entity_type, entity_id

@@ -18,7 +18,14 @@ from .models import User, AuthNonce, RefreshToken
 from proposals.models import Notification
 from .serializers import NotificationSerializer
 
+from rest_framework.throttling import AnonRateThrottle
+
+class NonceRateThrottle(AnonRateThrottle):
+    scope = 'nonce'
+
 class NonceView(APIView):
+    throttle_classes = [NonceRateThrottle]
+
     def post(self, request):
         wallet_address = request.data.get('wallet_address')
         if not wallet_address:

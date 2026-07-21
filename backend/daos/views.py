@@ -37,8 +37,18 @@ class DaoViewSet(viewsets.ReadOnlyModelViewSet):
         power = cache.get(cache_key)
         
         if power is None:
-            # mock getting from contract via GenLayer SDK
-            power = "100"
+            from indexer.sync import _get_genlayer_client
+            from django.conf import settings
+            try:
+                client = _get_genlayer_client()
+                chain_power = client.read_contract(
+                    address=settings.GENLAYER_CONTRACT_ADDRESS,
+                    function_name="get_voting_power",
+                    args=[dao.dao_id, request.user.wallet_address]
+                )
+                power = str(chain_power)
+            except Exception:
+                power = "0"
             cache.set(cache_key, power, timeout=300)
             
         return Response({"voting_power": power})

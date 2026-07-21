@@ -15,6 +15,11 @@ from django.conf import settings
 
 from genlayer_py import create_client
 from genlayer_py.chains import studionet
+
+def _normalize_address(addr) -> str:
+    if hasattr(addr, 'as_hex'):
+        return addr.as_hex.lower()
+    return str(addr).lower()
 from eth_account import Account
 
 from indexer.models import RawStateSnapshot, SyncCursor
@@ -157,9 +162,10 @@ def _sync_proposal_votes(proposal_id: int, reclaim_round: int):
     if not voters:
         return
         
-    for voter_address in voters:
+    for chain_voter_address in voters:
+        voter_address = _normalize_address(chain_voter_address)
         for vote_type in ["fund", "reclaim"]:
-            chain_vote = _fetch_vote_from_chain(proposal_id, vote_type, voter_address)
+            chain_vote = _fetch_vote_from_chain(proposal_id, vote_type, chain_voter_address)
             if chain_vote is not None:
                 vote_round = reclaim_round if vote_type == "reclaim" else 0
                 with transaction.atomic():
@@ -215,7 +221,7 @@ def _sync_single_dao(dao_id: int, trigger_source: str = "celery_beat"):
             # Update all fields from chain data
             existing.name = chain_data["name"]
             existing.description = chain_data.get("description", "")
-            existing.admin = chain_data["admin"]
+            existing.admin = _normalize_address(chain_data["admin"])
             existing.quorum_bps = chain_data["quorum_bps"]
             existing.approval_threshold_bps = chain_data["approval_threshold_bps"]
             existing.voting_period_seconds = chain_data["voting_period_seconds"]
@@ -231,7 +237,7 @@ def _sync_single_dao(dao_id: int, trigger_source: str = "celery_beat"):
                 dao_id=dao_id,
                 name=chain_data["name"],
                 description=chain_data.get("description", ""),
-                admin=chain_data["admin"],
+                admin=_normalize_address(chain_data["admin"]),
                 quorum_bps=chain_data["quorum_bps"],
                 approval_threshold_bps=chain_data["approval_threshold_bps"],
                 voting_period_seconds=chain_data["voting_period_seconds"],
@@ -276,7 +282,7 @@ def _sync_single_proposal(proposal_id: int, trigger_source: str = "celery_beat")
 
             # Update all fields from chain data
             existing.dao_id = chain_data["dao_id"]
-            existing.contributor = chain_data["contributor"]
+            existing.contributor = _normalize_address(chain_data["contributor"])
             existing.title = chain_data["title"]
             existing.description = chain_data["description"]
             existing.deliverable_criteria = chain_data["deliverable_criteria"]
@@ -312,7 +318,7 @@ def _sync_single_proposal(proposal_id: int, trigger_source: str = "celery_beat")
             ProposalCache.objects.create(
                 proposal_id=proposal_id,
                 dao_id=chain_data["dao_id"],
-                contributor=chain_data["contributor"],
+                contributor=_normalize_address(chain_data["contributor"]),
                 title=chain_data["title"],
                 description=chain_data["description"],
                 deliverable_criteria=chain_data["deliverable_criteria"],
@@ -427,7 +433,7 @@ def _create_treasury_snapshots():
 # Out-of-cycle single-entity resync
 # ---------------------------------------------------------------------------
 
-def sync_entity(entity_type: str, entity_id: int):
+def sync_entity(entity_type: str, entity_id: int, user_address: str = None):
     """
     Resync a single entity on demand (called from the sync-request endpoint).
     Does NOT create TreasuryStatsSnapshots to avoid uneven-interval noise.
@@ -435,6 +441,9 @@ def sync_entity(entity_type: str, entity_id: int):
     """
     if entity_type == "dao":
         _sync_single_dao(entity_id, trigger_source="api")
+        if user_address:
+            from django.core.cache import cache
+            cache.delete(f'voting_power_{entity_id}_{user_address.lower()}')
     elif entity_type == "proposal":
         _sync_single_proposal(entity_id, trigger_source="api")
     else:

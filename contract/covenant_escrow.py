@@ -874,7 +874,7 @@ nothing else:
             "dao_id": dao_id,
             "name": dao.name,
             "description": dao.description,
-            "admin": hex(dao.admin.as_int),
+            "admin": dao.admin.as_hex,
             "quorum_bps": dao.quorum_bps,
             "approval_threshold_bps": dao.approval_threshold_bps,
             "voting_period_seconds": dao.voting_period_seconds,
@@ -909,7 +909,7 @@ nothing else:
         return {
             "proposal_id": proposal_id,
             "dao_id": proposal.dao_id,
-            "contributor": hex(proposal.contributor.as_int),
+            "contributor": proposal.contributor.as_hex,
             "title": proposal.title,
             "description": proposal.description,
             "deliverable_criteria": proposal.deliverable_criteria,
@@ -944,6 +944,10 @@ nothing else:
     @gl.public.view
     def get_voting_power(self, dao_id: u256, address: Address) -> u256:
         """Return an address's voting power in a specific DAO."""
+        if type(address) in (int, str):
+            if isinstance(address, int):
+                address = "0x" + format(address, "040x")
+            address = Address(address)
         key = self._voting_power_key(dao_id, address)
         return self.voting_power.get(key, 0)
 
@@ -955,6 +959,11 @@ nothing else:
         Reclaim keys: '{proposal_id}:reclaim:{reclaim_round}:{address_hex}'
         (uses the proposal's current reclaim_round).
         """
+        if type(address) in (int, str):
+            if isinstance(address, int):
+                address = "0x" + format(address, "040x")
+            address = Address(address)
+            
         reclaim_round = 0
         if vote_type == VOTE_TYPE_RECLAIM:
             proposal = self.proposals.get(proposal_id, None)
@@ -1000,7 +1009,7 @@ nothing else:
 
     def _voting_power_key(self, dao_id: u256, address: Address) -> str:
         """Build the flat namespaced key for voting_power: '{dao_id}:{address_hex}'"""
-        return f"{dao_id}:{hex(address.as_int)}"
+        return f"{dao_id}:{address.as_hex}"
 
     def _vote_key(
         self,
@@ -1016,6 +1025,6 @@ nothing else:
         """
         if vote_type == VOTE_TYPE_RECLAIM:
             return (
-                f"{proposal_id}:{vote_type}:{reclaim_round}:{hex(address.as_int)}"
+                f"{proposal_id}:{vote_type}:{reclaim_round}:{address.as_hex}"
             )
-        return f"{proposal_id}:{vote_type}:{hex(address.as_int)}"
+        return f"{proposal_id}:{vote_type}:{address.as_hex}"

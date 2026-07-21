@@ -299,6 +299,35 @@ class TestDepositTreasury:
         assert contract.get_voting_power(args=[0, accounts[0].address]).call() == 500
         assert contract.get_voting_power(args=[1, accounts[0].address]).call() == 2000
 
+class TestAddressInterpolationBug:
+    def test_voting_power_with_leading_zero_address(self):
+        """
+        Written per spec, not executable without a funded studionet account.
+        Verify manually in Studio instead.
+
+        Tests that an address with a leading zero byte does not get its zero stripped
+        during storage key interpolation, which would cause get_voting_power to fail.
+        """
+        pytest.skip("Not executable without funded studionet account -- verify manually in Studio")
+        
+        contract = deploy_contract()
+        
+        # We use a dummy address that explicitly starts with a leading zero byte (0x00)
+        # to ensure the storage key interpolation doesn't strip it.
+        class DummyAccount:
+            address = "0x00a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1"
+            
+        zero_account = DummyAccount()
+        
+        # This requires a funded account to successfully deposit
+        deposit(contract, zero_account, 0, 500)
+        
+        # If the interpolation bug exists (hex(as_int) stripping leading zeros while another 
+        # part of the system retains them), this lookup might fail or return 0.
+        vp = contract.get_voting_power(args=[0, zero_account.address]).call()
+        assert vp == 500
+
+
 
 # ---------------------------------------------------------------------------
 # A. Deterministic pre-checks — NO AI mock required

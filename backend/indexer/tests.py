@@ -460,6 +460,26 @@ class SyncEntityTest(TransactionTestCase):
         self.addCleanup(patcher.stop)
         patcher.start()
 
+    @patch('indexer.sync._fetch_vote_from_chain')
+    @patch('indexer.sync._fetch_voters_from_chain')
+    @patch('indexer.sync._fetch_proposal_from_chain')
+    def test_casing_normalization(self, mock_proposal, mock_voters, mock_vote):
+        chain_data = make_proposal_chain_data(proposal_id=99)
+        chain_data["contributor"] = "0xMiXeDcAsE123"
+        mock_proposal.return_value = chain_data
+        mock_voters.return_value = ["0xVoTeR123"]
+        mock_vote.return_value = {"support": 1, "weight": 100, "voted_at": 1690000000}
+        
+        from indexer.sync import _sync_single_proposal
+        _sync_single_proposal(99)
+        
+        p = ProposalCache.objects.get(proposal_id=99)
+        self.assertEqual(p.contributor, "0xmixedcase123")
+        
+        from proposals.models import VoteCache
+        v = VoteCache.objects.get(proposal_id=99, vote_type="fund")
+        self.assertEqual(v.voter_address, "0xvoter123")
+
     @patch('indexer.sync._fetch_proposal_from_chain')
     def test_sync_entity_proposal(self, mock_fetch):
         """sync_entity should sync a single proposal without creating TreasuryStatsSnapshot."""
@@ -505,7 +525,7 @@ class SyncRequestEndpointTest(TransactionTestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        mock_sync.assert_called_once_with("proposal", 1)
+        mock_sync.assert_called_once_with("proposal", 1, self.user.wallet_address)
 
     def test_invalid_entity_type_returns_400(self):
         self.client.force_authenticate(user=self.user)
