@@ -299,6 +299,38 @@ class ProposalSyncDiffTest(TransactionTestCase):
         self.assertEqual(entry.from_status, 1)
         self.assertEqual(entry.to_status, 3)
 
+    @patch('indexer.sync._sync_proposal_votes')
+    @patch('indexer.sync._fetch_proposal_from_chain')
+    def test_reclaim_voting_triggers_vote_sync(self, mock_fetch, mock_sync_votes):
+        """Vote sync must run if status is VERIFICATION_FAILED (4) - the reclaim voting phase."""
+        ProposalCache.objects.create(
+            proposal_id=0, dao_id=0, contributor="0xcontributor",
+            title="Test", description="Desc", deliverable_criteria="Criteria",
+            requested_amount=Decimal("500000"), deadline=timezone.now() + timedelta(days=30),
+            status=4,  # VERIFICATION_FAILED
+            yes_weight=Decimal("0"), no_weight=Decimal("0"),
+            reclaim_yes_weight=Decimal("0"), reclaim_no_weight=Decimal("0"),
+            reclaim_round=0, escrowed_amount=Decimal("500000"), resubmission_count=1,
+        )
+        
+        # Chain still says status=4 (no status transition)
+        chain_data = make_proposal_chain_data(proposal_id=0, status=4, escrowed_amount=500000)
+        mock_fetch.return_value = chain_data
+        
+        _sync_single_proposal(0)
+        
+        # Should sync because 4 is an active voting phase
+        mock_sync_votes.assert_called_once_with(0, 0)
+        mock_sync_votes.reset_mock()
+        
+        # Now test that it DOES NOT run on a non-voting phase without transition (e.g., ESCROWED=3)
+        ProposalCache.objects.filter(proposal_id=0).update(status=3)
+        chain_data = make_proposal_chain_data(proposal_id=0, status=3, escrowed_amount=500000)
+        mock_fetch.return_value = chain_data
+        
+        _sync_single_proposal(0)
+        mock_sync_votes.assert_not_called()
+
     @patch('indexer.sync._fetch_proposal_from_chain')
     def test_no_change_creates_zero_audit_entries(self, mock_fetch):
         """Re-polling identical state should NOT create any audit entries."""
@@ -423,6 +455,36 @@ class FullSyncTest(TransactionTestCase):
         self.assertEqual(cursor.last_polled_proposal_count, 1)
         self.assertIsNotNone(cursor.last_full_sync_at)
         self.assertFalse(cursor.is_syncing)  # Lock released
+
+    @patch('indexer.sync._sync_single_proposal')
+    @patch('indexer.sync._sync_single_dao')
+    @patch('indexer.sync._fetch_proposal_count_from_chain')
+    @patch('indexer.sync._fetch_dao_count_from_chain')
+    def test_full_sync_per_entity_error_isolation(
+        self, mock_dao_count, mock_proposal_count, mock_sync_dao, mock_sync_proposal
+    ):
+        """A failure in syncing one entity should not abort the sync for other entities."""
+        mock_dao_count.return_value = 2
+        mock_proposal_count.return_value = 2
+        
+        # Make proposal 0 fail, but proposal 1 succeed
+        def side_effect(proposal_id, trigger_source):
+            if proposal_id == 0:
+                raise ValueError("Simulated failure")
+        mock_sync_proposal.side_effect = side_effect
+
+        run_full_sync()
+
+        # Both DAOs should be synced
+        self.assertEqual(mock_sync_dao.call_count, 2)
+        # Both proposals should be attempted
+        self.assertEqual(mock_sync_proposal.call_count, 2)
+        
+        # The cursor should still advance and lock release correctly
+        cursor = SyncCursor.objects.get()
+        self.assertEqual(cursor.last_polled_dao_count, 2)
+        self.assertEqual(cursor.last_polled_proposal_count, 2)
+        self.assertFalse(cursor.is_syncing)
 
     @patch('indexer.sync._fetch_proposal_from_chain')
     @patch('indexer.sync._fetch_dao_from_chain')

@@ -153,6 +153,31 @@ def _release_sync_lock():
 # Single-entity sync (used by both full sync and out-of-cycle resync)
 # ---------------------------------------------------------------------------
 
+import time
+from genlayer_py.exceptions import GenLayerError
+
+def _fetch_vote_with_retry(proposal_id: int, vote_type: str, address: str) -> dict:
+    max_retries = 3
+    base_delay = 0.5
+    for attempt in range(max_retries + 1):
+        try:
+            # Small delay between every call to avoid hitting the rate limit immediately
+            if attempt > 0 or vote_type == "reclaim" or address != "":
+                time.sleep(base_delay)
+            return _fetch_vote_from_chain(proposal_id, vote_type, address)
+        except GenLayerError as e:
+            if "Server busy" in str(e) or "-32006" in str(e):
+                if attempt < max_retries:
+                    delay = base_delay * (2 ** attempt)
+                    logger.warning("GenLayer server busy fetching vote for %s on proposal %d, retrying in %.1fs...", address, proposal_id, delay)
+                    time.sleep(delay)
+                    continue
+                else:
+                    logger.warning("Exhausted retries fetching vote for %s on proposal %d. Skipping this vote for this poll cycle.", address, proposal_id)
+                    return None
+            else:
+                raise
+
 def _sync_proposal_votes(proposal_id: int, reclaim_round: int):
     """
     Fetch the list of voters for a proposal, then fetch each vote (fund & reclaim)
@@ -165,7 +190,7 @@ def _sync_proposal_votes(proposal_id: int, reclaim_round: int):
     for chain_voter_address in voters:
         voter_address = _normalize_address(chain_voter_address)
         for vote_type in ["fund", "reclaim"]:
-            chain_vote = _fetch_vote_from_chain(proposal_id, vote_type, chain_voter_address)
+            chain_vote = _fetch_vote_with_retry(proposal_id, vote_type, chain_voter_address)
             if chain_vote is not None:
                 vote_round = reclaim_round if vote_type == "reclaim" else 0
                 with transaction.atomic():
@@ -271,6 +296,7 @@ def _sync_single_proposal(proposal_id: int, trigger_source: str = "celery_beat")
 
     new_status = chain_data["status"]
 
+    old_status = None
     with transaction.atomic():
         try:
             existing = (
@@ -343,7 +369,10 @@ def _sync_single_proposal(proposal_id: int, trigger_source: str = "celery_beat")
             )
             # No audit log for first-ever insertion — there's no "from" status
 
-    _sync_proposal_votes(proposal_id, chain_data["reclaim_round"])
+    # 1 = OPEN_FOR_VOTING, 4 = VERIFICATION_FAILED (reclaim voting phase)
+    should_sync_votes = (old_status is None) or (new_status in [1, 4]) or (old_status != new_status)
+    if should_sync_votes:
+        _sync_proposal_votes(proposal_id, chain_data["reclaim_round"])
 
     snapshot.processed = True
     snapshot.save(update_fields=['processed'])

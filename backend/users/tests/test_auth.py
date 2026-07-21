@@ -82,7 +82,8 @@ class AuthAPITests(TestCase):
             
             # 4. Check token presence
             self.assertIn('access', data)
-            self.assertIn('refresh', data)
+            self.assertNotIn('refresh', data)
+            self.assertIn('refresh_token', response.cookies)
             
             # 5. Check side effects
             # User should be created
@@ -92,7 +93,7 @@ class AuthAPITests(TestCase):
             # Refresh token row should be created
             self.assertEqual(RefreshToken.objects.count(), 1)
             # Token hash should match what is stored
-            raw_refresh = data['refresh']
+            raw_refresh = response.cookies['refresh_token'].value
             token_hash = hashlib.sha256(raw_refresh.encode()).hexdigest()
             self.assertTrue(RefreshToken.objects.filter(token_hash=token_hash).exists())
 
@@ -192,13 +193,16 @@ class AuthAPITests(TestCase):
             expires_at=timezone.now() + timedelta(days=7)
         )
         
-        response = self.client.post(reverse('auth_refresh'), {'refresh_token': raw_refresh})
+        self.client.cookies['refresh_token'] = raw_refresh
+        response = self.client.post(reverse('auth_refresh'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         data = response.json()
         self.assertIn('access', data)
-        self.assertIn('refresh', data)
-        self.assertNotEqual(data['refresh'], raw_refresh)
+        self.assertNotIn('refresh', data)
+        self.assertIn('refresh_token', response.cookies)
+        new_raw_refresh = response.cookies['refresh_token'].value
+        self.assertNotEqual(new_raw_refresh, raw_refresh)
         
         # Verify old token is revoked and linked
         rt.refresh_from_db()
@@ -206,7 +210,7 @@ class AuthAPITests(TestCase):
         self.assertIsNotNone(rt.replaced_by)
         
         # Verify new token exists
-        new_hash = hashlib.sha256(data['refresh'].encode()).hexdigest()
+        new_hash = hashlib.sha256(new_raw_refresh.encode()).hexdigest()
         self.assertTrue(RefreshToken.objects.filter(token_hash=new_hash).exists())
 
     def test_refresh_revoked_token(self):
@@ -222,7 +226,8 @@ class AuthAPITests(TestCase):
             revoked=True
         )
         
-        response = self.client.post(reverse('auth_refresh'), {'refresh_token': raw_refresh})
+        self.client.cookies['refresh_token'] = raw_refresh
+        response = self.client.post(reverse('auth_refresh'))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_refresh_expired_token(self):
@@ -237,7 +242,8 @@ class AuthAPITests(TestCase):
             expires_at=timezone.now() - timedelta(days=1)
         )
         
-        response = self.client.post(reverse('auth_refresh'), {'refresh_token': raw_refresh})
+        self.client.cookies['refresh_token'] = raw_refresh
+        response = self.client.post(reverse('auth_refresh'))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_logout_happy_path(self):
@@ -256,12 +262,17 @@ class AuthAPITests(TestCase):
         # But we don't strictly need a valid access token to run the View logic if we override permission_classes,
         # or we just use APIClient's force_authenticate. Let's use force_authenticate.
         self.client.force_authenticate(user=user)
+        self.client.cookies['refresh_token'] = raw_refresh
         
-        response = self.client.post(reverse('auth_logout'), {'refresh_token': raw_refresh})
+        response = self.client.post(reverse('auth_logout'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         rt.refresh_from_db()
         self.assertTrue(rt.revoked)
+        
+        # Verify cookie is cleared
+        self.assertIn('refresh_token', response.cookies)
+        self.assertEqual(response.cookies['refresh_token'].value, '')
 
 from django.test import TransactionTestCase
 import concurrent.futures

@@ -101,16 +101,25 @@ class VerifySignatureView(APIView):
             expires_at=timezone.now() + timedelta(days=7)
         )
         
-        return Response({
+        response = Response({
             "access": str(access),
-            "refresh": raw_refresh
         })
+        
+        response.set_cookie(
+            'refresh_token',
+            raw_refresh,
+            max_age=7 * 24 * 60 * 60,
+            httponly=True,
+            samesite='Lax',
+            secure=not settings.DEBUG
+        )
+        return response
 
 class RefreshTokenView(APIView):
     def post(self, request):
-        raw_refresh = request.data.get('refresh_token')
+        raw_refresh = request.COOKIES.get('refresh_token')
         if not raw_refresh:
-            return Response({"error": "refresh_token is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "refresh_token cookie is required"}, status=status.HTTP_400_BAD_REQUEST)
             
         token_hash = hashlib.sha256(raw_refresh.encode()).hexdigest()
         try:
@@ -143,18 +152,27 @@ class RefreshTokenView(APIView):
         token_obj.replaced_by = new_refresh_obj
         token_obj.save(update_fields=['revoked', 'replaced_by'])
         
-        return Response({
+        response = Response({
             "access": str(access),
-            "refresh": new_raw_refresh
         })
+        
+        response.set_cookie(
+            'refresh_token',
+            new_raw_refresh,
+            max_age=7 * 24 * 60 * 60,
+            httponly=True,
+            samesite='Lax',
+            secure=not settings.DEBUG
+        )
+        return response
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        raw_refresh = request.data.get('refresh_token')
+        raw_refresh = request.COOKIES.get('refresh_token')
         if not raw_refresh:
-            return Response({"error": "refresh_token is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "refresh_token cookie is required"}, status=status.HTTP_400_BAD_REQUEST)
             
         token_hash = hashlib.sha256(raw_refresh.encode()).hexdigest()
         # Find token and ensure it belongs to the logged in user
@@ -162,7 +180,9 @@ class LogoutView(APIView):
             token_obj = RefreshToken.objects.get(token_hash=token_hash, user=request.user)
             token_obj.revoked = True
             token_obj.save(update_fields=['revoked'])
-            return Response({"status": "logged out"})
+            response = Response({"status": "logged out"})
+            response.delete_cookie('refresh_token', samesite='Lax')
+            return response
         except RefreshToken.DoesNotExist:
             return Response({"error": "Invalid refresh token"}, status=status.HTTP_400_BAD_REQUEST)
 
