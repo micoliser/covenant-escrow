@@ -43,9 +43,9 @@ class ProposalDraft(models.Model):
     dao_id = models.BigIntegerField()
     title = models.CharField(max_length=255)
     description = models.TextField()
-    deliverable_criteria = models.TextField()
-    requested_amount = models.DecimalField(max_digits=78, decimal_places=0)
-    deadline = models.DateTimeField()
+    deliverable_criteria = models.TextField(blank=True, default="")
+    requested_amount = models.DecimalField(max_digits=78, decimal_places=0, null=True, blank=True)
+    deadline = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
 class VoteCache(models.Model):

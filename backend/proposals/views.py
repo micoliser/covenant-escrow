@@ -22,11 +22,20 @@ class ProposalSearchFilter(filters.BaseFilterBackend):
             return queryset.filter(search_vector=SearchQuery(search_term))
         return queryset
 
+class ProposalContributorFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        my_proposals = request.query_params.get('my_proposals')
+        if my_proposals == 'true' and request.user.is_authenticated:
+            return queryset.filter(contributor__iexact=request.user.wallet_address)
+        return queryset
+
 class ProposalViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ProposalCache.objects.all()
     serializer_class = ProposalCacheSerializer
-    filter_backends = [DjangoFilterBackend, ProposalSearchFilter]
+    filter_backends = [DjangoFilterBackend, ProposalSearchFilter, ProposalContributorFilter, filters.OrderingFilter]
     filterset_fields = ['dao_id', 'status']
+    ordering_fields = ['submitted_at']
+    ordering = ['-submitted_at']
 
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
@@ -98,6 +107,17 @@ class ProposalDraftPrepareSubmitView(APIView):
         draft = get_object_or_404(ProposalDraft, pk=pk)
         self.check_object_permissions(request, draft)
         
+        errors = {}
+        if not draft.deliverable_criteria:
+            errors['deliverable_criteria'] = ["Deliverable criteria is required to submit a proposal."]
+        if draft.requested_amount is None:
+            errors['requested_amount'] = ["Requested amount is required to submit a proposal."]
+        if not draft.deadline:
+            errors['deadline'] = ["A deadline is required to submit a proposal."]
+            
+        if errors:
+            return Response(errors, status=400)
+
         # GenVM arguments list expected by submit_proposal
         args = [
             draft.dao_id,

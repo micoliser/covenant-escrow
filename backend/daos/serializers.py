@@ -2,9 +2,14 @@ from rest_framework import serializers
 from .models import DaoCache, TreasuryStatsSnapshot
 
 class DaoCacheSerializer(serializers.ModelSerializer):
+    active_proposal_count = serializers.SerializerMethodField()
     class Meta:
         model = DaoCache
         fields = '__all__'
+
+    def get_active_proposal_count(self, obj):
+        from proposals.models import ProposalCache
+        return ProposalCache.objects.filter(dao_id=obj.dao_id).exclude(status__in=[0, 2, 5, 7]).count()
 
 class DaoPrepareCreateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)

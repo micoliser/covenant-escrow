@@ -305,6 +305,7 @@ def _sync_single_proposal(proposal_id: int, trigger_source: str = "celery_beat")
                 .get(proposal_id=proposal_id)
             )
             old_status = existing.status
+            old_resubmission_count = existing.resubmission_count
 
             # Update all fields from chain data
             existing.dao_id = chain_data["dao_id"]
@@ -332,8 +333,8 @@ def _sync_single_proposal(proposal_id: int, trigger_source: str = "celery_beat")
             existing.reclaim_vote_ends_at = _timestamp_to_datetime_or_none(chain_data["reclaim_vote_ends_at"])
             existing.save()
 
-            # Audit log on status transition
-            if old_status != new_status:
+            # Audit log on status transition or resubmission
+            if old_status != new_status or old_resubmission_count != chain_data["resubmission_count"]:
                 ProposalAuditLogEntry.objects.create(
                     proposal_id=proposal_id,
                     from_status=old_status,

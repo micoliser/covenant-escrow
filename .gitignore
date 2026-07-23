@@ -87,3 +87,4 @@ Thumbs.db
 # ==========================
 .agents/
 .system_generated/
+stitch_covenant_escrow_dao/*

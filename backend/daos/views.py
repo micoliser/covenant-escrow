@@ -53,6 +53,44 @@ class DaoViewSet(viewsets.ReadOnlyModelViewSet):
             
         return Response({"voting_power": power})
 
+    @action(detail=True, methods=['post'], url_path='proposals/latest')
+    def latest_proposal(self, request, pk=None):
+        """
+        Finds the most recently created proposal for this DAO directly from the chain,
+        syncs it to the local cache, and returns its ID.
+        """
+        dao = self.get_object()
+        from indexer.sync import _get_genlayer_client, sync_entity
+        from django.conf import settings
+        
+        try:
+            client = _get_genlayer_client()
+            
+            # Get the global proposal count
+            global_count = client.read_contract(
+                address=settings.GENLAYER_CONTRACT_ADDRESS,
+                function_name="get_proposal_count",
+                args=[]
+            )
+            
+            # Search backwards from the newest proposal
+            for p_id in range(int(global_count) - 1, -1, -1):
+                prop_data = client.read_contract(
+                    address=settings.GENLAYER_CONTRACT_ADDRESS,
+                    function_name="get_proposal",
+                    args=[p_id]
+                )
+                if prop_data and int(prop_data.get("dao_id", -1)) == dao.dao_id:
+                    # Found the latest proposal for this DAO, force sync it!
+                    sync_entity("proposal", p_id, request.user.wallet_address if request.user.is_authenticated else "")
+                    return Response({"proposal_id": p_id})
+                    
+            return Response({"detail": "No proposals found for this DAO on-chain."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).exception("Failed to fetch latest proposal from chain")
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=True, methods=['get'], url_path='treasury/stats')
     def treasury_stats(self, request, pk=None):
         dao = self.get_object()

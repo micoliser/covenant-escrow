@@ -48,13 +48,15 @@ export function useApi() {
           method: 'POST',
           credentials: 'include' // 4. Explicitly include credentials for the refresh call
         }).then(async res => {
-          if (!res.ok) throw new Error('Refresh failed');
+          if (!res.ok) return null;
           const data = await res.json();
           return data.access;
-        }).catch(() => null)
-          .finally(() => {
-             refreshPromise = null;
-          });
+        }).catch((err: unknown) => {
+          // Silent catch to prevent unhandled rejection overlay on refresh failure
+          return null;
+        }).finally(() => {
+          refreshPromise = null;
+        });
       }
 
       const newAccess = await refreshPromise;

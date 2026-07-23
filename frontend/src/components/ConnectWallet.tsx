@@ -21,6 +21,13 @@ export function ConnectWallet() {
       setError('');
       setIsAuthenticating(true);
 
+      if (typeof window !== 'undefined') {
+        const eth = (window as any).ethereum;
+        if (!eth || !eth.isMetaMask) {
+          throw new Error("Only MetaMask is supported. Please install or switch to MetaMask.");
+        }
+      }
+
       let walletAddress = address;
       let currentChainId = chainId;
 
@@ -66,9 +73,9 @@ export function ConnectWallet() {
 
       // 6. Set token
       setAccessToken(access);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Connection error:', err);
-      setError(err.message || 'Connection failed');
+      setError(err instanceof Error ? err.message : 'Connection failed');
       await disconnectAsync().catch(() => {});
     } finally {
       setIsAuthenticating(false);

@@ -30,6 +30,7 @@ export interface Dao {
   total_balance: string; // u256
   total_voting_power: string; // u256
   proposal_count: number;
+  active_proposal_count?: number;
   created_at: string;
   last_synced_at: string;
 }
@@ -37,6 +38,7 @@ export interface Dao {
 export interface Proposal {
   proposal_id: number;
   dao_id: number;
+  dao_name?: string;
   contributor: string;
   title: string;
   description: string;

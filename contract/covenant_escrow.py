@@ -14,6 +14,11 @@ import json
 # inside these structs — all collections stay flat at the contract level.
 # ---------------------------------------------------------------------------
 
+@gl.evm.contract_interface
+class _Recipient:
+    class View: pass
+    class Write: pass
+
 @allow_storage
 @dataclass
 class Dao:
@@ -827,7 +832,7 @@ nothing else:
         self.proposals[proposal_id] = proposal
 
         # Transfer funds to the contributor
-        gl.message.sender_address.transfer(amount)
+        _Recipient(proposal.contributor).emit_transfer(value=u256(amount))
 
     @gl.public.write
     def reclaim_expired_escrow(self, proposal_id: u256) -> None:

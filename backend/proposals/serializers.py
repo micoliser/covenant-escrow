@@ -2,9 +2,18 @@ from rest_framework import serializers
 from .models import ProposalCache, ProposalAuditLogEntry, ProposalDraft, VoteCache, Comment
 
 class ProposalCacheSerializer(serializers.ModelSerializer):
+    dao_name = serializers.SerializerMethodField()
+
     class Meta:
         model = ProposalCache
         exclude = ('search_vector',)
+
+    def get_dao_name(self, obj):
+        from daos.models import DaoCache
+        try:
+            return DaoCache.objects.get(dao_id=obj.dao_id).name
+        except DaoCache.DoesNotExist:
+            return f"DAO #{obj.dao_id}"
 
 class ProposalAuditLogEntrySerializer(serializers.ModelSerializer):
     class Meta:
