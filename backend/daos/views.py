@@ -1,14 +1,33 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import permissions, status
 from django.core.cache import cache
+from django.db.models import Q, Sum
+from django.db.models.functions import Coalesce
 from .models import DaoCache, TreasuryStatsSnapshot
+from proposals.models import ProposalCache
 from .serializers import DaoCacheSerializer, DaoPrepareCreateSerializer, TreasuryStatsSnapshotSerializer
+
+class DaoSearchFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        search_term = request.query_params.get('search')
+        if search_term:
+            return queryset.filter(Q(name__icontains=search_term) | Q(description__icontains=search_term))
+        return queryset
+
+class DaoAdminFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        my_daos = request.query_params.get('my_daos')
+        if my_daos == 'true' and request.user.is_authenticated:
+            return queryset.filter(admin__iexact=request.user.wallet_address)
+        return queryset
 
 class DaoViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DaoCache.objects.all()
     serializer_class = DaoCacheSerializer
+    filter_backends = [DaoSearchFilter, DaoAdminFilter, filters.OrderingFilter]
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
 
     @action(detail=False, methods=['post'], url_path='prepare-create')
     def prepare_create(self, request):
@@ -102,7 +121,72 @@ class DaoViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='treasury/history')
     def treasury_history(self, request, pk=None):
+        from django.utils import timezone
+        import datetime
         dao = self.get_object()
-        snapshots = TreasuryStatsSnapshot.objects.filter(dao_id=dao.dao_id).order_by('-snapshot_at')
+        
+        days = request.query_params.get('days', 30)
+        try:
+            days = int(days)
+        except ValueError:
+            days = 30
+            
+        cutoff_date = timezone.now() - datetime.timedelta(days=days)
+        snapshots = TreasuryStatsSnapshot.objects.filter(dao_id=dao.dao_id, snapshot_at__gte=cutoff_date).order_by('-snapshot_at')
         serializer = TreasuryStatsSnapshotSerializer(snapshots, many=True)
         return Response({'results': serializer.data})
+
+    @action(detail=False, methods=['get'], url_path='global_stats')
+    def global_stats(self, request):
+        from django.db.models import DecimalField, Value
+        from .models import DaoMemberCache
+        
+        total_ecosystems = DaoCache.objects.count()
+        total_tvl = DaoCache.objects.aggregate(
+            total_tvl=Coalesce(Sum('total_balance'), Value(0, output_field=DecimalField()), output_field=DecimalField())
+        )['total_tvl']
+        
+        total_proposals = ProposalCache.objects.count()
+        active_proposals = ProposalCache.objects.filter(status__in=[1, 3, 4]).count()
+        
+        total_funding_released = ProposalCache.objects.filter(status=7).aggregate(
+            total=Coalesce(Sum('requested_amount'), Value(0, output_field=DecimalField()), output_field=DecimalField())
+        )['total']
+        
+        total_escrowed = ProposalCache.objects.aggregate(
+            total=Coalesce(Sum('escrowed_amount'), Value(0, output_field=DecimalField()), output_field=DecimalField())
+        )['total']
+        
+        total_members = DaoMemberCache.objects.values('member_address').distinct().count()
+        
+        return Response({
+            'total_ecosystems': total_ecosystems,
+            'total_members': total_members,
+            'total_tvl': str(total_tvl),
+            'total_proposals': total_proposals,
+            'active_proposals': active_proposals,
+            'total_funding_released': str(total_funding_released),
+            'total_escrowed': str(total_escrowed),
+        })
+
+    @action(detail=True, methods=['get'], url_path='detailed_stats')
+    def detailed_stats(self, request, pk=None):
+        from django.db.models import DecimalField, Value
+        dao = self.get_object()
+        
+        total_funding_released = ProposalCache.objects.filter(dao_id=dao.dao_id, status=7).aggregate(
+            total=Coalesce(Sum('requested_amount'), Value(0, output_field=DecimalField()), output_field=DecimalField())
+        )['total']
+        
+        total_escrowed = ProposalCache.objects.filter(dao_id=dao.dao_id).aggregate(
+            total=Coalesce(Sum('escrowed_amount'), Value(0, output_field=DecimalField()), output_field=DecimalField())
+        )['total']
+        
+        all_time_inflows = dao.total_balance + total_escrowed + total_funding_released
+        
+        return Response({
+            'total_funding_released': str(total_funding_released),
+            'total_escrowed': str(total_escrowed),
+            'all_time_inflows': str(all_time_inflows),
+            'current_balance': str(dao.total_balance),
+        })

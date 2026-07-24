@@ -39,3 +39,14 @@ class TreasuryStatsSnapshotModelTest(TestCase):
         self.assertEqual(snapshot.dao_id, 1)
         self.assertEqual(snapshot.total_balance, Decimal("2000000000000000000"))
         self.assertIsNotNone(snapshot.snapshot_at)
+
+class DaoMemberCacheModelTest(TestCase):
+    def test_dao_member_cache_creation(self):
+        from daos.models import DaoMemberCache
+        member = DaoMemberCache.objects.create(
+            dao_id=1,
+            member_address="0xmember123"
+        )
+        member.refresh_from_db()
+        self.assertEqual(member.dao_id, 1)
+        self.assertEqual(member.member_address, "0xmember123")

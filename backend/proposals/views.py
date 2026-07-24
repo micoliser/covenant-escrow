@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from django.contrib.postgres.search import SearchQuery
+from django.db.models import Q
 
 from .models import ProposalCache, ProposalAuditLogEntry, ProposalDraft, VoteCache, Comment
 from .serializers import (
@@ -19,7 +19,7 @@ class ProposalSearchFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         search_term = request.query_params.get('search')
         if search_term:
-            return queryset.filter(search_vector=SearchQuery(search_term))
+            return queryset.filter(Q(title__icontains=search_term) | Q(description__icontains=search_term))
         return queryset
 
 class ProposalContributorFilter(filters.BaseFilterBackend):

@@ -23,7 +23,7 @@ def _normalize_address(addr) -> str:
 from eth_account import Account
 
 from indexer.models import RawStateSnapshot, SyncCursor
-from daos.models import DaoCache, TreasuryStatsSnapshot
+from daos.models import DaoCache, DaoMemberCache, TreasuryStatsSnapshot
 from proposals.models import ProposalCache, ProposalAuditLogEntry, VoteCache
 
 logger = logging.getLogger(__name__)
@@ -91,6 +91,16 @@ def _fetch_voters_from_chain(proposal_id: int) -> list:
         address=settings.GENLAYER_CONTRACT_ADDRESS,
         function_name="get_voters",
         args=[proposal_id]
+    )
+
+
+def _fetch_dao_members_from_chain(dao_id: int) -> list:
+    """Call CovenantEscrow.get_dao_members(dao_id) on studionet."""
+    client = _get_genlayer_client()
+    return client.read_contract(
+        address=settings.GENLAYER_CONTRACT_ADDRESS,
+        function_name="get_dao_members",
+        args=[dao_id]
     )
 
 
@@ -256,6 +266,7 @@ def _sync_single_dao(dao_id: int, trigger_source: str = "celery_beat"):
             existing.total_balance = Decimal(str(chain_data["total_balance"]))
             existing.total_voting_power = Decimal(str(chain_data["total_voting_power"]))
             existing.proposal_count = chain_data["proposal_count"]
+            existing.member_count = chain_data.get("member_count", 0)
             existing.save()
         except DaoCache.DoesNotExist:
             DaoCache.objects.create(
@@ -272,7 +283,20 @@ def _sync_single_dao(dao_id: int, trigger_source: str = "celery_beat"):
                 total_balance=Decimal(str(chain_data["total_balance"])),
                 total_voting_power=Decimal(str(chain_data["total_voting_power"])),
                 proposal_count=chain_data["proposal_count"],
+                member_count=chain_data.get("member_count", 0),
             )
+
+    # Sync dao members
+    chain_members = _fetch_dao_members_from_chain(dao_id)
+    if chain_members:
+        with transaction.atomic():
+            for chain_member_address in chain_members:
+                member_address = _normalize_address(chain_member_address)
+                # Like VoteCache, we just ensure it exists
+                DaoMemberCache.objects.update_or_create(
+                    dao_id=dao_id,
+                    member_address=member_address,
+                )
 
     snapshot.processed = True
     snapshot.save(update_fields=['processed'])
@@ -447,14 +471,10 @@ def _create_treasury_snapshots():
             status__in=[1, 3, 4],  # OPEN_FOR_VOTING, ESCROWED, VERIFICATION_FAILED
         ).count()
 
-        # member_count = distinct depositors. For now we use the DAO's
-        # proposal_count as a proxy — the real member count requires
-        # scanning the voting_power map, which isn't exposed by the contract.
-        # This will be refined when we add a dedicated view or index deposits.
         TreasuryStatsSnapshot.objects.create(
             dao_id=dao.dao_id,
             total_balance=dao.total_balance,
-            member_count=0,  # Placeholder — needs deposit tracking
+            member_count=dao.member_count,
             active_proposal_count=active_count,
         )
 

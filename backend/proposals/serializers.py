@@ -6,7 +6,7 @@ class ProposalCacheSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProposalCache
-        exclude = ('search_vector',)
+        fields = '__all__'
 
     def get_dao_name(self, obj):
         from daos.models import DaoCache

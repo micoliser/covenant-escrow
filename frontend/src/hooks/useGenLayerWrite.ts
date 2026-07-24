@@ -17,7 +17,8 @@ export function useGenLayerWrite() {
     contractAddress: string,
     functionName: string,
     args: unknown[],
-    onTxHash?: (hash: string) => void
+    onTxHash?: (hash: string) => void,
+    value?: bigint
   ) => {
     if (!isConnected || !address) {
       throw new Error("Wallet not connected");
@@ -53,7 +54,7 @@ export function useGenLayerWrite() {
         functionName,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         args: args as any,
-        value: BigInt(0),
+        value: value ?? BigInt(0),
       });
 
       if (onTxHash) {

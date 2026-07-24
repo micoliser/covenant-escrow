@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApi } from '@/hooks/useApi';
 import { useAccount } from 'wagmi';
+import { useHasMounted } from '@/hooks/useHasMounted';
 import { useTransaction } from '@/hooks/useTransaction';
 import { Proposal, ProposalHistoryEvent, ProposalStatus } from '@/types';
 import { formatGen } from '@/lib/formatGen';
@@ -23,6 +24,7 @@ export default function ProposalDetail() {
   
   const { fetchApi } = useApi();
   const { address, isConnected } = useAccount();
+  const hasMounted = useHasMounted();
   const { execute, isLocked, error: txError } = useTransaction();
   const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
@@ -101,7 +103,7 @@ export default function ProposalDetail() {
     );
   }
 
-  const isContributor = address?.toLowerCase() === proposal.contributor.toLowerCase();
+  const isContributor = hasMounted && address?.toLowerCase() === proposal.contributor.toLowerCase();
   const now = new Date();
   
   // Funding voting
@@ -474,7 +476,7 @@ export default function ProposalDetail() {
                 {proposal.status === 1 && (
                   <>
                     {isVoting ? (
-                      !isConnected ? (
+                      !hasMounted || !isConnected ? (
                         <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">Connect Wallet to Vote</div>
                       ) : currentFundVote ? (
                         <div className="text-center p-3 bg-accent/20 border border-accent/30 rounded-lg text-sm text-accent-light">
@@ -535,7 +537,7 @@ export default function ProposalDetail() {
                     )}
 
                     {!isContributor && isReclaimVoting && (
-                      !isConnected ? (
+                      !hasMounted || !isConnected ? (
                         <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">Connect Wallet to Vote</div>
                       ) : currentReclaimVote ? (
                         <div className="text-center p-3 bg-accent/20 border border-accent/30 rounded-lg text-sm text-accent-light">

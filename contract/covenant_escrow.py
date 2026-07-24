@@ -36,6 +36,7 @@ class Dao:
     # never shrinks when funds are escrowed. Quorum denominator (not liquid balance).
     total_voting_power: u256
     proposal_count: u256
+    member_count: u256
 
 
 @allow_storage
@@ -128,6 +129,11 @@ class CovenantEscrow(gl.Contract):
     proposal_voters: TreeMap[str, Address]
     proposal_voter_counts: TreeMap[u256, u256]
 
+    # dao_members keyed by "{dao_id}:{index}"
+    dao_members: TreeMap[str, Address]
+    # has_deposited keyed by "{dao_id}:{address_hex}" to track unique depositors
+    has_deposited: TreeMap[str, bool]
+
     # ===================================================================
     # Constructor  (§4 — Setup)
     # ===================================================================
@@ -208,6 +214,7 @@ class CovenantEscrow(gl.Contract):
             total_balance=0,
             total_voting_power=0,
             proposal_count=0,
+            member_count=0,
         )
 
         return dao_id
@@ -313,10 +320,20 @@ class CovenantEscrow(gl.Contract):
         # Update DAO treasury balance and permanent voting-power total
         dao.total_balance = dao.total_balance + amount
         dao.total_voting_power = dao.total_voting_power + amount
+
+        # Track unique members per DAO
+        sender = gl.message.sender_address
+        has_deposited_key = f"{dao_id}:{sender.as_hex}"
+        if not self.has_deposited.get(has_deposited_key, False):
+            count = dao.member_count
+            self.dao_members[f"{dao_id}:{count}"] = sender
+            dao.member_count = count + 1
+            self.has_deposited[has_deposited_key] = True
+
         self.daos[dao_id] = dao
 
         # Update sender's voting power for this DAO
-        key = self._voting_power_key(dao_id, gl.message.sender_address)
+        key = self._voting_power_key(dao_id, sender)
         current_power = self.voting_power.get(key, 0)
         self.voting_power[key] = current_power + amount
 
@@ -889,6 +906,7 @@ nothing else:
             "total_balance": dao.total_balance,
             "total_voting_power": dao.total_voting_power,
             "proposal_count": dao.proposal_count,
+            "member_count": dao.member_count,
         }
 
     @gl.public.view
@@ -997,6 +1015,33 @@ nothing else:
             if voter is not None:
                 voters.append(voter)
         return voters
+
+    @gl.public.view
+    def get_dao_members(self, dao_id: u256) -> list[Address]:
+        """
+        Return a list of all addresses that have deposited into this DAO.
+        """
+        dao = self.daos.get(dao_id, None)
+        if dao is None:
+            return []
+            
+        count = dao.member_count
+        members = []
+        for i in range(count):
+            member = self.dao_members.get(f"{dao_id}:{i}", None)
+            if member is not None:
+                members.append(member)
+        return members
+
+    @gl.public.view
+    def get_dao_member_count(self, dao_id: u256) -> int:
+        """
+        Return the number of unique members who have deposited into this DAO.
+        """
+        dao = self.daos.get(dao_id, None)
+        if dao is None:
+            return 0
+        return int(dao.member_count)
 
     # ===================================================================
     # Internal helpers

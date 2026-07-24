@@ -20,8 +20,14 @@ class DaoAPITests(APITestCase):
             max_resubmissions=3,
             min_criteria_length=10,
             total_balance=Decimal("100"),
-            total_voting_power=Decimal("50")
+            total_voting_power=Decimal("50"),
+            member_count=10
         )
+        
+        from daos.models import DaoMemberCache
+        DaoMemberCache.objects.create(dao_id=1, member_address="0xuser1")
+        DaoMemberCache.objects.create(dao_id=1, member_address="0xuser2")
+        DaoMemberCache.objects.create(dao_id=2, member_address="0xuser2") # overlapping member
         
         from daos.models import TreasuryStatsSnapshot
         self.snapshot1 = TreasuryStatsSnapshot.objects.create(
@@ -120,6 +126,13 @@ class DaoAPITests(APITestCase):
         self.assertEqual(len(response.data['results']), 2)
         self.assertEqual(response.data['results'][0]['id'], self.snapshot2.id)
         self.assertEqual(response.data['results'][1]['id'], self.snapshot1.id)
+
+    def test_global_stats(self):
+        url = '/api/daos/global_stats/'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['total_ecosystems'], 1)
+        self.assertEqual(response.data['total_members'], 2) # distinct from DaoMemberCache setup
 
     def test_prepare_create(self):
         url = '/api/daos/prepare-create/'

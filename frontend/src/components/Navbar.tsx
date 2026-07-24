@@ -9,11 +9,19 @@ import { Bell } from "lucide-react";
 export function Navbar() {
   const pathname = usePathname();
 
-  const navLinks = [
-    { name: "DAOs", href: "/dao/1" },
-    { name: "Proposals", href: "/dao/1" },
-    { name: "Treasury", href: "#", disabled: true },
+  const navLinks: { name: string; href: string; disabled?: boolean }[] = [
+    { name: "DAOs", href: "/daos" },
+    { name: "Proposals", href: "/proposals" },
+    { name: "Treasury", href: "/treasury" },
   ];
+
+  const isLinkActive = (link: typeof navLinks[0]) => {
+    if (link.disabled) return false;
+    if (link.name === "DAOs") return pathname === "/daos" || pathname.startsWith("/dao/");
+    if (link.name === "Proposals") return pathname === "/proposals" || pathname.startsWith("/proposal/");
+    if (link.name === "Treasury") return pathname === "/treasury" || pathname.includes("/treasury");
+    return pathname === link.href;
+  };
 
   return (
     <header className="fixed top-0 w-full z-50 px-6 py-4 bg-zinc-950/80 backdrop-blur-xl border-b border-white/5">
@@ -35,7 +43,7 @@ export function Navbar() {
                   "text-sm font-medium transition-colors",
                   link.disabled 
                     ? "text-zinc-600 cursor-not-allowed pointer-events-none" 
-                    : pathname === link.href || (link.name === "Proposals" && pathname.includes("/proposal"))
+                    : isLinkActive(link)
                       ? "text-white"
                       : "text-zinc-400 hover:text-white"
                 )}

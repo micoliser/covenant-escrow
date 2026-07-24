@@ -15,11 +15,24 @@ class DaoCache(models.Model):
     total_balance = models.DecimalField(max_digits=78, decimal_places=0, default=0)
     total_voting_power = models.DecimalField(max_digits=78, decimal_places=0, default=0)
     proposal_count = models.IntegerField(default=0)
+    member_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
     last_synced_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
+
+class DaoMemberCache(models.Model):
+    dao_id = models.BigIntegerField()
+    member_address = models.CharField(max_length=42)
+    synced_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('dao_id', 'member_address')
+        indexes = [
+            models.Index(fields=['dao_id']),
+            models.Index(fields=['member_address']),
+        ]
 
 class TreasuryStatsSnapshot(models.Model):
     dao_id = models.BigIntegerField()

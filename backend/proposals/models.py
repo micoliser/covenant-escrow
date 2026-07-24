@@ -1,6 +1,4 @@
 from django.db import models
-from django.contrib.postgres.search import SearchVectorField
-from django.contrib.postgres.indexes import GinIndex
 from django.utils import timezone
 from users.models import User
 from daos.models import DaoCache
@@ -31,12 +29,6 @@ class ProposalCache(models.Model):
     vote_ends_at = models.DateTimeField(null=True, blank=True)
     reclaim_vote_ends_at = models.DateTimeField(null=True, blank=True)
     last_synced_at = models.DateTimeField(auto_now=True)
-    search_vector = SearchVectorField(null=True, blank=True)
-
-    class Meta:
-        indexes = [
-            GinIndex(fields=['search_vector']),
-        ]
 
 class ProposalDraft(models.Model):
     contributor = models.ForeignKey(User, on_delete=models.CASCADE)

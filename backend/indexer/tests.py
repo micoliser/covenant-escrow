@@ -20,8 +20,9 @@ from indexer.sync import (
     _sync_proposal_votes,
     run_full_sync,
     sync_entity,
+    _fetch_dao_members_from_chain
 )
-from daos.models import DaoCache, TreasuryStatsSnapshot
+from daos.models import DaoCache, TreasuryStatsSnapshot, DaoMemberCache
 from proposals.models import ProposalCache, ProposalAuditLogEntry, VoteCache
 from users.models import User
 
@@ -49,6 +50,7 @@ def make_dao_chain_data(dao_id=0, **overrides):
         "total_balance": 1000000,
         "total_voting_power": 2000000,
         "proposal_count": 5,
+        "member_count": 2,
     }
     data.update(overrides)
     return data
@@ -213,11 +215,13 @@ class SyncLockTest(TransactionTestCase):
 # ===========================================================================
 
 class DaoSyncDiffTest(TransactionTestCase):
+    @patch('indexer.sync._fetch_dao_members_from_chain')
     @patch('indexer.sync._fetch_dao_from_chain')
-    def test_new_dao_inserted(self, mock_fetch):
+    def test_new_dao_inserted(self, mock_fetch, mock_fetch_members):
         """A DAO not yet in the DB should be created from chain data."""
         chain_data = make_dao_chain_data(dao_id=0)
         mock_fetch.return_value = chain_data
+        mock_fetch_members.return_value = ["0xuser1", "0xuser2"]
 
         _sync_single_dao(0)
 
@@ -225,9 +229,17 @@ class DaoSyncDiffTest(TransactionTestCase):
         dao = DaoCache.objects.get(dao_id=0)
         self.assertEqual(dao.name, "Test DAO")
         self.assertEqual(dao.total_balance, Decimal("1000000"))
+        self.assertEqual(dao.member_count, 2)
+        
+        # Check DaoMemberCache
+        members = DaoMemberCache.objects.filter(dao_id=0).order_by("member_address")
+        self.assertEqual(members.count(), 2)
+        self.assertEqual(members[0].member_address, "0xuser1")
+        self.assertEqual(members[1].member_address, "0xuser2")
 
+    @patch('indexer.sync._fetch_dao_members_from_chain')
     @patch('indexer.sync._fetch_dao_from_chain')
-    def test_dao_updated_on_change(self, mock_fetch):
+    def test_dao_updated_on_change(self, mock_fetch, mock_fetch_members):
         """An existing DAO should be updated when chain data differs."""
         DaoCache.objects.create(
             dao_id=0, name="Old Name", description="Old", admin="0xadmin",
@@ -246,10 +258,12 @@ class DaoSyncDiffTest(TransactionTestCase):
         self.assertEqual(dao.name, "Updated DAO")
         self.assertEqual(dao.total_balance, Decimal("999999"))
 
+    @patch('indexer.sync._fetch_dao_members_from_chain')
     @patch('indexer.sync._fetch_dao_from_chain')
-    def test_raw_snapshot_created(self, mock_fetch):
+    def test_raw_snapshot_created(self, mock_fetch, mock_fetch_members):
         """Every sync call should create a RawStateSnapshot for replay."""
         mock_fetch.return_value = make_dao_chain_data(dao_id=0)
+        mock_fetch_members.return_value = []
         _sync_single_dao(0)
 
         snapshots = RawStateSnapshot.objects.filter(entity_type="dao", entity_id=0)
@@ -434,16 +448,18 @@ class FullSyncTest(TransactionTestCase):
         patcher.start()
 
     @patch('indexer.sync._fetch_proposal_from_chain')
+    @patch('indexer.sync._fetch_dao_members_from_chain')
     @patch('indexer.sync._fetch_dao_from_chain')
     @patch('indexer.sync._fetch_proposal_count_from_chain')
     @patch('indexer.sync._fetch_dao_count_from_chain')
     def test_full_sync_discovers_new_entities(
-        self, mock_dao_count, mock_proposal_count, mock_dao_fetch, mock_proposal_fetch
+        self, mock_dao_count, mock_proposal_count, mock_dao_fetch, mock_dao_members, mock_proposal_fetch
     ):
         """Full sync should discover and insert newly created DAOs/proposals."""
         mock_dao_count.return_value = 1
         mock_proposal_count.return_value = 1
         mock_dao_fetch.return_value = make_dao_chain_data(dao_id=0)
+        mock_dao_members.return_value = []
         mock_proposal_fetch.return_value = make_proposal_chain_data(proposal_id=0)
 
         run_full_sync()
@@ -487,11 +503,12 @@ class FullSyncTest(TransactionTestCase):
         self.assertFalse(cursor.is_syncing)
 
     @patch('indexer.sync._fetch_proposal_from_chain')
+    @patch('indexer.sync._fetch_dao_members_from_chain')
     @patch('indexer.sync._fetch_dao_from_chain')
     @patch('indexer.sync._fetch_proposal_count_from_chain')
     @patch('indexer.sync._fetch_dao_count_from_chain')
     def test_full_sync_creates_treasury_snapshots(
-        self, mock_dao_count, mock_proposal_count, mock_dao_fetch, mock_proposal_fetch
+        self, mock_dao_count, mock_proposal_count, mock_dao_fetch, mock_dao_members, mock_proposal_fetch
     ):
         """At the end of a full sync, one TreasuryStatsSnapshot per DAO should be created."""
         mock_dao_count.return_value = 2
@@ -500,6 +517,7 @@ class FullSyncTest(TransactionTestCase):
             make_dao_chain_data(dao_id=0, total_balance=1000, proposal_count=3),
             make_dao_chain_data(dao_id=1, name="DAO Two", total_balance=2000, proposal_count=1),
         ]
+        mock_dao_members.return_value = []
 
         run_full_sync()
 
@@ -553,9 +571,11 @@ class SyncEntityTest(TransactionTestCase):
         # No TreasuryStatsSnapshot — that's only for full syncs
         self.assertEqual(TreasuryStatsSnapshot.objects.count(), 0)
 
+    @patch('indexer.sync._fetch_dao_members_from_chain')
     @patch('indexer.sync._fetch_dao_from_chain')
-    def test_sync_entity_dao(self, mock_fetch):
+    def test_sync_entity_dao(self, mock_fetch, mock_dao_members):
         mock_fetch.return_value = make_dao_chain_data(dao_id=3)
+        mock_dao_members.return_value = []
         sync_entity("dao", 3)
         self.assertEqual(DaoCache.objects.filter(dao_id=3).count(), 1)
 

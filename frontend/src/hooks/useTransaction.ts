@@ -30,7 +30,8 @@ export function useTransaction() {
     contractAddress: string, 
     functionName: string, 
     args: unknown[], 
-    opts?: ExecuteOptions
+    opts?: ExecuteOptions,
+    value?: bigint
   ) => {
     setTxPhase('CONFIRMING');
     setError(null);
@@ -49,7 +50,8 @@ export function useTransaction() {
           timeoutId = setTimeout(() => {
             toast.loading("Transaction is taking longer than expected. It is still being processing...", { id: toastId });
           }, 60000);
-        }
+        },
+        value
       );
 
       // Timeout or undetermined states should be caught by submitTransaction throwing, 

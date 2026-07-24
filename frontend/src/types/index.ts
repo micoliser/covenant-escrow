@@ -31,6 +31,7 @@ export interface Dao {
   total_voting_power: string; // u256
   proposal_count: number;
   active_proposal_count?: number;
+  member_count?: number;
   created_at: string;
   last_synced_at: string;
 }
@@ -71,4 +72,21 @@ export interface ProposalHistoryEvent {
   to_status: ProposalStatus;
   observed_at: string;
   chain_tx_hash: string;
+}
+
+export interface GlobalStats {
+  total_ecosystems: number;
+  total_members?: number;
+  total_tvl: string;
+  total_proposals: number;
+  active_proposals: number;
+  total_funding_released: string;
+  total_escrowed: string;
+}
+
+export interface DetailedStats {
+  total_funding_released: string;
+  total_escrowed: string;
+  all_time_inflows: string;
+  current_balance: string;
 }

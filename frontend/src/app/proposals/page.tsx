@@ -1,59 +1,73 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useApi } from '@/hooks/useApi';
-import { Dao, PaginatedResponse, Proposal, ProposalStatus } from '@/types';
+import { Dao, PaginatedResponse, Proposal, ProposalStatus, GlobalStats } from '@/types';
 import { formatGen } from '@/lib/formatGen';
-import { SkeletonPageHeader, SkeletonCard } from '@/components/Skeletons';
-import { StatusBadge } from '@/components/StatusBadge';
+import { SkeletonCard } from '@/components/Skeletons';
 import { 
-  Search, Filter, Calendar, Coins, Plus, ChevronDown, 
-  User, Clock, CheckCircle, AlertCircle, History, Lock 
+  Search, ChevronDown, User, Clock, CheckCircle, AlertCircle, History, Lock, Shield,
+  FileText, Activity, BarChart, Send
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { useAccount } from 'wagmi';
 import { useHasMounted } from '@/hooks/useHasMounted';
 
-export default function DaoFeed() {
-  const params = useParams();
+export default function ProposalsGlobalFeed() {
   const router = useRouter();
-  const daoId = params.daoId as string;
-  
   const { fetchApi } = useApi();
-  const [dao, setDao] = useState<Dao | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [daos, setDaos] = useState<Dao[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedDaoId, setSelectedDaoId] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [ordering, setOrdering] = useState<string>('-submitted_at');
   const [myProposals, setMyProposals] = useState(false);
+  const [stats, setStats] = useState<GlobalStats | null>(null);
   const { isConnected } = useAccount();
   const hasMounted = useHasMounted();
 
+  // Load DAOs for dropdown filter on mount
   useEffect(() => {
-    async function loadData() {
-      if (!daoId) return;
+    async function loadDaos() {
+      try {
+        const res = await fetchApi('/api/daos/');
+        if (res.ok) {
+          const data: PaginatedResponse<Dao> = await res.json();
+          setDaos(data.results);
+        }
+      } catch (err) {
+        console.error("Failed to load DAOs:", err);
+      }
+    }
+    loadDaos();
+  }, [fetchApi]);
+
+  // Fetch proposals based on filters
+  useEffect(() => {
+    async function loadProposals() {
       try {
         setIsLoading(true);
-        // Fetch DAO and Proposals concurrently
-        let proposalsUrl = `/api/proposals/?dao_id=${daoId}`;
+        let proposalsUrl = `/api/proposals/?ordering=${ordering}`;
+        if (selectedDaoId !== 'ALL') proposalsUrl += `&dao_id=${selectedDaoId}`;
         if (search) proposalsUrl += `&search=${encodeURIComponent(search)}`;
         if (statusFilter !== 'ALL') proposalsUrl += `&status=${statusFilter}`;
-        if (ordering) proposalsUrl += `&ordering=${ordering}`;
         if (myProposals && isConnected) proposalsUrl += `&my_proposals=true`;
 
-        const [daoRes, propRes] = await Promise.all([
-          fetchApi(`/api/daos/${daoId}/`),
-          fetchApi(proposalsUrl)
-        ]);
-
-        if (daoRes.ok) setDao(await daoRes.json());
-        if (propRes.ok) {
-          const propData: PaginatedResponse<Proposal> = await propRes.json();
+        const res = await fetchApi(proposalsUrl);
+        if (res.ok) {
+          const propData: PaginatedResponse<Proposal> = await res.json();
           setProposals(propData.results);
+        }
+
+        const statsRes = await fetchApi('/api/daos/global_stats/');
+        if (statsRes.ok) {
+          const statsData: GlobalStats = await statsRes.json();
+          setStats(statsData);
         }
       } catch (err) {
         console.error(err);
@@ -62,93 +76,80 @@ export default function DaoFeed() {
       }
     }
     
-    // Add debounce for search in a real app, keeping it simple here
-    const timer = setTimeout(loadData, 300);
+    const timer = setTimeout(loadProposals, 300);
     return () => clearTimeout(timer);
-  }, [daoId, fetchApi, search, statusFilter, ordering, myProposals, isConnected]);
-
-  if (isLoading && !dao) {
-    return (
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <SkeletonPageHeader />
-        <div className="space-y-4">
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      </div>
-    );
-  }
+  }, [selectedDaoId, fetchApi, search, statusFilter, ordering, myProposals, isConnected]);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pt-24 lg:pt-32">
       {/* Header */}
-      {dao && (
-        <>
-          <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-              <h2 className="text-5xl font-display font-bold text-white mb-2 tracking-tight">{dao.name}</h2>
-              <p className="text-lg text-zinc-400">{dao.description}</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/dao/${daoId}/treasury`)}
-                className="flex items-center gap-2 px-6 py-6 rounded-xl text-sm font-medium border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800 transition-colors w-full sm:w-auto justify-center"
-              >
-                Treasury
-              </Button>
-              <Button
-                onClick={() => router.push(`/dao/${daoId}/proposal/create`)}
-                className="bg-accent hover:bg-accent-hover text-white flex items-center gap-2 px-6 py-6 rounded-xl text-sm font-medium shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-colors w-full sm:w-auto justify-center"
-              >
-                <Plus className="w-5 h-5" />
-                Create Proposal
-              </Button>
-            </div>
-          </header>
+      <header className="mb-12">
+        <h1 className="text-4xl lg:text-5xl font-display font-bold text-white mb-3 tracking-tight">
+          All Proposals
+        </h1>
+        <p className="text-lg text-zinc-400">
+          Explore and vote on proposals across all ecosystem DAOs.
+        </p>
+      </header>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium mb-1">Treasury Balance</p>
-                <p className="text-xl font-display font-semibold text-white tabular-nums">{formatGen(dao.total_balance)} GEN</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium mb-1">Total Members</p>
-                <p className="text-xl font-display font-semibold text-white tabular-nums">
-                  {dao.member_count !== undefined ? dao.member_count : "-"}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium mb-1">Total / Active</p>
-                <p className="text-xl font-display font-semibold text-white tabular-nums">
-                  {dao.proposal_count} <span className="text-zinc-500 text-base font-normal">/ {dao.active_proposal_count || 0}</span>
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium mb-1">Voting Period</p>
-                <p className="text-xl font-display font-semibold text-white tabular-nums">
-                  {dao.voting_period_seconds / 60} mins
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium mb-1">Quorum</p>
-                <p className="text-xl font-display font-semibold text-white tabular-nums">
-                  {Number(dao.quorum_bps) / 100}%
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </>
-      )}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card className="bg-zinc-900/50 border-white/5">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-blue-400" />
+              </div>
+              <h3 className="text-zinc-400 font-medium">Total Proposals</h3>
+            </div>
+            <div className="text-3xl font-display font-bold text-white mt-1">
+              {stats ? stats.total_proposals : "-"}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-zinc-900/50 border-white/5">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <Activity className="w-5 h-5 text-emerald-400" />
+              </div>
+              <h3 className="text-zinc-400 font-medium">Active Proposals</h3>
+            </div>
+            <div className="text-3xl font-display font-bold text-white mt-1">
+              {stats ? stats.active_proposals : "-"}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-zinc-900/50 border-white/5">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                <BarChart className="w-5 h-5 text-violet-400" />
+              </div>
+              <h3 className="text-zinc-400 font-medium whitespace-nowrap overflow-hidden text-ellipsis">Avg. Proposals/DAO</h3>
+            </div>
+            <div className="text-3xl font-display font-bold text-white mt-1">
+              {stats && stats.total_ecosystems > 0 ? (stats.total_proposals / stats.total_ecosystems).toFixed(1) : "-"}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-zinc-900/50 border-white/5">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <Send className="w-5 h-5 text-orange-400" />
+              </div>
+              <h3 className="text-zinc-400 font-medium whitespace-nowrap overflow-hidden text-ellipsis">Value Distributed</h3>
+            </div>
+            <div className="text-3xl font-display font-bold text-white mt-1 truncate">
+              {stats ? formatGen(stats.total_funding_released) : "-"} GEN
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Controls */}
       <div className="flex flex-col md:flex-row gap-4 mb-8 flex-wrap">
@@ -162,13 +163,32 @@ export default function DaoFeed() {
             className="w-full bg-zinc-900 border border-zinc-700 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent placeholder:text-zinc-500 transition-colors"
           />
         </div>
-        <div className="relative w-full md:w-64">
+
+        {/* DAO Filter */}
+        <div className="relative w-full md:w-56">
+          <select
+            value={selectedDaoId}
+            onChange={(e) => setSelectedDaoId(e.target.value)}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-xl py-3 pl-4 pr-10 text-white text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors appearance-none cursor-pointer"
+          >
+            <option value="ALL">All DAOs</option>
+            {daos.map((d) => (
+              <option key={d.dao_id} value={d.dao_id.toString()}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none w-5 h-5" />
+        </div>
+
+        {/* Status Filter */}
+        <div className="relative w-full md:w-56">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full bg-zinc-900 border border-zinc-700 rounded-xl py-3 pl-4 pr-10 text-white text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors appearance-none cursor-pointer"
           >
-            <option value="ALL">All Proposals</option>
+            <option value="ALL">All Statuses</option>
             <option value={ProposalStatus.OPEN_FOR_VOTING}>Open for Voting</option>
             <option value={ProposalStatus.ESCROWED}>Escrowed</option>
             <option value={ProposalStatus.RELEASED}>Released</option>
@@ -178,6 +198,7 @@ export default function DaoFeed() {
           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none w-5 h-5" />
         </div>
         
+        {/* Sort Order */}
         <div className="relative w-full md:w-48">
           <select
             value={ordering}
@@ -190,6 +211,7 @@ export default function DaoFeed() {
           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none w-5 h-5" />
         </div>
 
+        {/* My Proposals Toggle */}
         {hasMounted && isConnected && (
           <div className="flex items-center gap-2">
             <button
@@ -216,8 +238,6 @@ export default function DaoFeed() {
           </div>
         ) : (
           proposals.map((prop) => {
-            
-            // Map statuses to Stitch classes
             let borderColor = "border-white/5 border-l-4 border-l-zinc-700";
             let statusBadge = null;
             let statusTextAccent = "text-zinc-500";
@@ -295,7 +315,6 @@ export default function DaoFeed() {
                 </Badge>
               );
             } else {
-              // Draft / Submitted / Unknown
               statusBadge = (
                 <Badge variant="outline" className="bg-zinc-800 text-zinc-400 border-zinc-700 gap-1.5 uppercase tracking-wider">
                   <Clock className="w-3.5 h-3.5" />
@@ -312,10 +331,21 @@ export default function DaoFeed() {
               >
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                    <div className="flex items-start gap-4 flex-col md:flex-row">
+                    <div className="flex items-start gap-3 flex-wrap">
                       {statusBadge}
-                      <div>
-                        <h3 className="text-2xl font-display font-semibold text-white">{prop.title}</h3>
+                      
+                      {/* DAO Badge */}
+                      <Link 
+                        href={`/dao/${prop.dao_id}`}
+                        onClick={(e) => e.stopPropagation()} 
+                        className="inline-flex items-center gap-1.5 bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700/50 px-2.5 py-1 rounded text-xs text-zinc-300 hover:text-white font-medium transition-colors"
+                      >
+                        <Shield className="w-3.5 h-3.5 text-accent" />
+                        {prop.dao_name || `DAO #${prop.dao_id}`}
+                      </Link>
+
+                      <div className="w-full mt-2">
+                        <h2 className="text-2xl font-display font-semibold text-white">{prop.title}</h2>
                         {prop.description && (
                           <p className="text-zinc-400 text-sm line-clamp-2 mt-1 pr-4">{prop.description}</p>
                         )}
@@ -334,7 +364,6 @@ export default function DaoFeed() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Coins className="w-4 h-4 text-zinc-400" />
                       <span className="text-lg font-display font-semibold text-white tabular-nums">
                         {formatGen(prop.requested_amount)} GEN
                       </span>

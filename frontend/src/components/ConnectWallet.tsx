@@ -5,8 +5,10 @@ import { useAccount, useConnect, useDisconnect, useSignMessage } from 'wagmi';
 import { SiweMessage } from 'siwe';
 import { useAuth } from '@/context/AuthContext';
 import { useApi } from '@/hooks/useApi';
+import { useHasMounted } from '@/hooks/useHasMounted';
 
 export function ConnectWallet() {
+  const hasMounted = useHasMounted();
   const { address, isConnected, chainId } = useAccount();
   const { connectors, connectAsync } = useConnect();
   const { disconnectAsync } = useDisconnect();
@@ -94,7 +96,7 @@ export function ConnectWallet() {
     logout();
   };
 
-  if (isAuthenticated && isConnected) {
+  if (hasMounted && isAuthenticated && isConnected) {
     return (
       <div className="flex items-center gap-4">
         <span className="text-sm font-mono font-medium text-foreground bg-foreground/5 px-3 py-1.5 rounded-full border border-foreground/10 shadow-sm backdrop-blur-sm">

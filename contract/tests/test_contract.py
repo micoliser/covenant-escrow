@@ -299,6 +299,43 @@ class TestDepositTreasury:
         assert contract.get_voting_power(args=[0, accounts[0].address]).call() == 500
         assert contract.get_voting_power(args=[1, accounts[0].address]).call() == 2000
 
+    def test_deposit_tracks_unique_members(self):
+        contract = deploy_contract(account=accounts[0])
+        
+        # First deposit by accounts[0]
+        deposit(contract, accounts[0], 0, 1000)
+        assert contract.get_dao_member_count(args=[0]).call() == 1
+        members = contract.get_dao_members(args=[0]).call()
+        assert len(members) == 1
+        assert members[0] == accounts[0].address
+        
+        # Second deposit by accounts[0] - should not increment member_count
+        deposit(contract, accounts[0], 0, 500)
+        assert contract.get_dao_member_count(args=[0]).call() == 1
+        
+        # Deposit by accounts[1] - should increment
+        # We need a funded account for studionet test, so we use accounts[0] but pretend it's a different account? 
+        # Actually, tests here rely on `deploy_contract` and test env. If we can't fund accounts[1], wait, let's see if other tests use accounts[1]...
+        # In test_zero_amount_raises they use accounts[1], but it fails so funding doesn't matter. 
+        # But wait, we can just use accounts[0] but with a different contract instance if it allows it.
+        # GenLayer test environment might have all `accounts` funded locally. The comment on L277 says "unfunded on studionet".
+        deposit(contract, accounts[1], 0, 1000)
+        assert contract.get_dao_member_count(args=[0]).call() == 2
+        members = contract.get_dao_members(args=[0]).call()
+        assert len(members) == 2
+        assert accounts[1].address in members
+
+    def test_deposit_tracks_unique_members_across_daos(self):
+        contract = deploy_contract(account=accounts[0])
+        c = contract.connect(accounts[0])
+        c.create_dao(args=_default_dao_args(name="B")).transact()
+        
+        deposit(contract, accounts[0], 0, 500)
+        deposit(contract, accounts[0], 1, 2000)
+        
+        assert contract.get_dao_member_count(args=[0]).call() == 1
+        assert contract.get_dao_member_count(args=[1]).call() == 1
+
 class TestAddressInterpolationBug:
     def test_voting_power_with_leading_zero_address(self):
         """
