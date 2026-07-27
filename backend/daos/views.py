@@ -35,11 +35,9 @@ class DaoViewSet(viewsets.ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         
-        # GenVM arguments list expected by create_dao
         args = [
             data.get('name'),
             data.get('description', ''),
-            data.get('admin'),
             data.get('quorum_bps'),
             data.get('approval_threshold_bps'),
             data.get('voting_period_seconds'),
@@ -52,7 +50,7 @@ class DaoViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['get'], url_path='voting-power/me', permission_classes=[permissions.IsAuthenticated])
     def voting_power(self, request, pk=None):
         dao = self.get_object()
-        cache_key = f'voting_power_{dao.dao_id}_{request.user.wallet_address}'
+        cache_key = f'voting_power_{dao.dao_id}_{request.user.wallet_address.lower()}'
         power = cache.get(cache_key)
         
         if power is None:
@@ -108,6 +106,33 @@ class DaoViewSet(viewsets.ReadOnlyModelViewSet):
         except Exception as e:
             import logging
             logging.getLogger(__name__).exception("Failed to fetch latest proposal from chain")
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'], url_path='latest')
+    def latest_dao(self, request):
+        """
+        Finds the most recently created DAO from the chain, syncs it, and returns its ID.
+        """
+        from indexer.sync import _get_genlayer_client, sync_entity
+        from django.conf import settings
+        
+        try:
+            client = _get_genlayer_client()
+            global_count = client.read_contract(
+                address=settings.GENLAYER_CONTRACT_ADDRESS,
+                function_name="get_dao_count",
+                args=[]
+            )
+            
+            if int(global_count) > 0:
+                latest_id = int(global_count) - 1
+                sync_entity("dao", latest_id, request.user.wallet_address if request.user.is_authenticated else "")
+                return Response({"dao_id": latest_id})
+                
+            return Response({"detail": "No DAOs found on-chain."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).exception("Failed to fetch latest DAO from chain")
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['get'], url_path='treasury/stats')

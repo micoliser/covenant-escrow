@@ -6,10 +6,10 @@ import { useApi } from '@/hooks/useApi';
 import { Dao, PaginatedResponse, Proposal, ProposalStatus } from '@/types';
 import { formatGen } from '@/lib/formatGen';
 import { SkeletonPageHeader, SkeletonCard } from '@/components/Skeletons';
-import { StatusBadge } from '@/components/StatusBadge';
+
 import { 
   Search, Filter, Calendar, Coins, Plus, ChevronDown, 
-  User, Clock, CheckCircle, AlertCircle, History, Lock 
+  User, Clock, CheckCircle, AlertCircle, History, Lock, Settings
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,8 +30,10 @@ export default function DaoFeed() {
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [ordering, setOrdering] = useState<string>('-submitted_at');
   const [myProposals, setMyProposals] = useState(false);
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const hasMounted = useHasMounted();
+  const isAdmin = hasMounted && isConnected && address?.toLowerCase() === dao?.admin?.toLowerCase();
+
 
   useEffect(() => {
     async function loadData() {
@@ -97,6 +99,16 @@ export default function DaoFeed() {
               >
                 Treasury
               </Button>
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/dao/${daoId}/settings`)}
+                  className="flex items-center gap-2 px-6 py-6 rounded-xl text-sm font-medium border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800 transition-colors w-full sm:w-auto justify-center"
+                >
+                  <Settings className="w-5 h-5" />
+                  Settings
+                </Button>
+              )}
               <Button
                 onClick={() => router.push(`/dao/${daoId}/proposal/create`)}
                 className="bg-accent hover:bg-accent-hover text-white flex items-center gap-2 px-6 py-6 rounded-xl text-sm font-medium shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-colors w-full sm:w-auto justify-center"
@@ -342,6 +354,7 @@ export default function DaoFeed() {
                     
                     <div className={`flex items-center gap-2 ml-auto ${statusTextAccent}`}>
                       <Clock className="w-4 h-4" />
+                      {/* eslint-disable-next-line react-hooks/purity */}
                       <span className="text-sm font-medium">Ends in {Math.max(0, Math.floor((new Date(prop.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}d</span>
                     </div>
                   </div>

@@ -14,7 +14,6 @@ class DaoCacheSerializer(serializers.ModelSerializer):
 class DaoPrepareCreateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     description = serializers.CharField(allow_blank=True, required=False)
-    admin = serializers.CharField(max_length=42)
     quorum_bps = serializers.IntegerField()
     approval_threshold_bps = serializers.IntegerField()
     voting_period_seconds = serializers.IntegerField()

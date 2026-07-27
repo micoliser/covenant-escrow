@@ -6,6 +6,7 @@ import { mainnet, sepolia } from 'wagmi/chains';
 import { injected } from 'wagmi/connectors';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ReactNode } from 'react';
 
 const queryClient = new QueryClient();
@@ -26,7 +27,9 @@ export function Providers({ children }: { children: ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          {children}
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
           <Toaster richColors position="bottom-right" />
         </AuthProvider>
       </QueryClientProvider>

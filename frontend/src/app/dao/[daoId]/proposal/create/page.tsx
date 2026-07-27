@@ -533,7 +533,7 @@ export default function CreateProposal() {
                 <Button 
                   onClick={handleSubmit} 
                   disabled={!isConfirmed || isSaving || isLocked}
-                  className="bg-accent hover:bg-accent-hover text-white flex-1"
+                  className="bg-accent hover:bg-accent-hover text-white min-w-32"
                 >
                   {(isSaving || isLocked) && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Submit to Blockchain

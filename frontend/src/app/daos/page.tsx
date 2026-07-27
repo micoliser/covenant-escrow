@@ -154,6 +154,18 @@ export default function DaosPage() {
             </button>
           </div>
         )}
+
+        {/* Create DAO */}
+        {hasMounted && isConnected && (
+          <div className="flex items-center md:ml-auto">
+            <Link
+              href="/daos/create"
+              className="px-4 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors whitespace-nowrap"
+            >
+              Create DAO
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* DAOs List */}

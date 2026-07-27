@@ -150,7 +150,6 @@ class DaoAPITests(APITestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("args", response.data)
-        # Should be formatted into the GenLayer args array structure, which is simply a list/dict in this case.
-        # It should match the 9 inputs.
-        self.assertEqual(len(response.data["args"]), 9)
+        # Should match the 8 inputs required by create_dao.
+        self.assertEqual(len(response.data["args"]), 8)
         self.assertEqual(response.data["args"][0], "Beta DAO")

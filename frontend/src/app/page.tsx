@@ -85,7 +85,7 @@ export default async function Home() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link href="#daos" className={cn(buttonVariants({ variant: "default" }), "bg-accent hover:bg-accent/90 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] w-full sm:w-auto px-6 py-6")}>
+                <Link href="/daos" className={cn(buttonVariants({ variant: "default" }), "bg-accent hover:bg-accent/90 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] w-full sm:w-auto px-6 py-6")}>
                   Explore DAOs
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
@@ -325,7 +325,7 @@ export default async function Home() {
             Join the ecosystem of AI-verified milestone delivery.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="#daos" className={cn(buttonVariants({ variant: "default" }), "w-full sm:w-auto bg-accent hover:bg-accent-hover text-white font-display font-medium px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(167,139,250,0.3)]")}>
+            <Link href="/daos" className={cn(buttonVariants({ variant: "default" }), "w-full sm:w-auto bg-accent hover:bg-accent-hover text-white font-display font-medium px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(167,139,250,0.3)]")}>
               Browse DAOs
               <ArrowRight className="w-5 h-5 ml-2" />
             </Link>
