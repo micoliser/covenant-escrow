@@ -6,7 +6,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
-from .models import ProposalCache, ProposalAuditLogEntry, ProposalDraft, VoteCache, Comment
+from .models import ProposalCache, ProposalAuditLogEntry, ProposalDraft, VoteCache, Comment, Notification
+from users.models import User
 from .serializers import (
     ProposalCacheSerializer,
     ProposalAuditLogEntrySerializer,
@@ -68,6 +69,16 @@ class ProposalViewSet(viewsets.ReadOnlyModelViewSet):
             serializer = CommentSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save(author=request.user, proposal=proposal)
+
+            if request.user.wallet_address.lower() != proposal.contributor.lower():
+                contributor_user = User.objects.filter(wallet_address=proposal.contributor.lower()).first()
+                if contributor_user:
+                    Notification.objects.create(
+                        user=contributor_user,
+                        proposal=proposal,
+                        type='new_comment'
+                    )
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class CommentDestroyView(generics.DestroyAPIView):

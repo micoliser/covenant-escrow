@@ -204,3 +204,20 @@ class NotificationReadView(APIView):
         notification.read_at = timezone.now()
         notification.save(update_fields=['read_at'])
         return Response({'status': 'read'})
+
+class NotificationUnreadCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        count = Notification.objects.filter(user=request.user, read_at__isnull=True).count()
+        return Response({'unread_count': count})
+
+class NotificationMarkAllReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        Notification.objects.filter(
+            user=request.user, 
+            read_at__isnull=True
+        ).update(read_at=timezone.now())
+        return Response({'status': 'all_read'})

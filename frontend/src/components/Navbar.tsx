@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ConnectWallet } from "./ConnectWallet";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
-import { Bell } from "lucide-react";
+import { NotificationsDropdown } from "./NotificationsDropdown";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -62,13 +62,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-6">
-          <button 
-            className="text-zinc-500 cursor-not-allowed pointer-events-none relative"
-            title="Notifications (Coming Soon)"
-            disabled
-          >
-            <Bell className="w-5 h-5" />
-          </button>
+          <NotificationsDropdown />
           <ConnectWallet />
         </div>
       </div>

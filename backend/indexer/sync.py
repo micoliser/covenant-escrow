@@ -24,9 +24,67 @@ from eth_account import Account
 
 from indexer.models import RawStateSnapshot, SyncCursor
 from daos.models import DaoCache, DaoMemberCache, TreasuryStatsSnapshot
-from proposals.models import ProposalCache, ProposalAuditLogEntry, VoteCache
+from proposals.models import ProposalCache, ProposalAuditLogEntry, VoteCache, Notification
+from users.models import User
 
 logger = logging.getLogger(__name__)
+
+def _create_status_notification(proposal_id: int, dao_id: int, contributor: str, old_status: int | None, new_status: int):
+    """
+    Generate notifications for proposal status transitions.
+    Excludes transitions to Released (7).
+    """
+    if new_status == 7:
+        return
+
+    notification_type = None
+    if old_status is None:
+        if new_status == 0:
+            notification_type = 'status_rejected'
+        elif new_status == 1:
+            notification_type = 'status_approved'
+    elif old_status != new_status:
+        if new_status == 3:
+            notification_type = 'status_escrowed'
+        elif new_status == 2:
+            notification_type = 'status_vote_failed'
+        elif new_status == 4:
+            notification_type = 'status_verification_failed'
+        elif new_status == 6:
+            notification_type = 'status_verification_passed'
+        elif new_status == 5:
+            notification_type = 'status_reclaimed'
+
+    if not notification_type:
+        return
+
+    user = User.objects.filter(wallet_address=contributor.lower()).first()
+    if user:
+        Notification.objects.create(
+            user=user,
+            proposal_id=proposal_id,
+            type=notification_type
+        )
+        
+    if old_status is None and new_status == 1:
+        # Create DAO-wide broadcast for a new proposal entering OpenForVoting.
+        # Exclude the contributor who already receives the 'status_approved' notification above.
+        members = DaoMemberCache.objects.filter(dao_id=dao_id)
+        member_addresses = [m.member_address.lower() for m in members if m.member_address.lower() != contributor.lower()]
+        
+        users = User.objects.filter(wallet_address__in=member_addresses)
+        
+        notifications_to_create = [
+            Notification(
+                user=u,
+                proposal_id=proposal_id,
+                type='new_proposal_in_dao'
+            ) for u in users
+        ]
+        
+        if notifications_to_create:
+            Notification.objects.bulk_create(notifications_to_create)
+
 
 # How long before we treat a sync lock as stale (crashed worker).
 STALE_LOCK_THRESHOLD = timedelta(minutes=5)
@@ -393,6 +451,14 @@ def _sync_single_proposal(proposal_id: int, trigger_source: str = "celery_beat")
                 reclaim_vote_ends_at=_timestamp_to_datetime_or_none(chain_data["reclaim_vote_ends_at"]),
             )
             # No audit log for first-ever insertion — there's no "from" status
+
+        _create_status_notification(
+            proposal_id=proposal_id,
+            dao_id=chain_data["dao_id"],
+            contributor=chain_data["contributor"],
+            old_status=old_status,
+            new_status=new_status
+        )
 
     # 1 = OPEN_FOR_VOTING, 4 = VERIFICATION_FAILED (reclaim voting phase)
     should_sync_votes = (old_status is None) or (new_status in [1, 4]) or (old_status != new_status)

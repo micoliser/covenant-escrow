@@ -16,7 +16,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-
+import { CommentsSection } from '@/components/CommentsSection';
 export default function ProposalDetail() {
   const params = useParams();
   const router = useRouter();
@@ -396,6 +396,9 @@ export default function ProposalDetail() {
               </details>
             </Card>
           </section>
+          
+          {/* Comments / Discussion Thread */}
+          <CommentsSection proposalId={proposalId} />
         </div>
 
         {/* Sidebar Column (1/3) */}
