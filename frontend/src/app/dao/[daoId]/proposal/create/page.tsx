@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { datetimeLocalToISO, isoToDatetimeLocal } from '@/lib/date';
 
 export default function CreateProposal() {
   const params = useParams();
@@ -74,10 +75,7 @@ export default function CreateProposal() {
           if (data.requested_amount && data.deadline) {
             const genAmount = formatUnits(BigInt(data.requested_amount), 18);
             setRequestedAmount(genAmount);
-            
-            const dateObj = new Date(data.deadline);
-            const formattedDeadline = dateObj.toISOString().slice(0, 16);
-            setDeadline(formattedDeadline);
+            setDeadline(isoToDatetimeLocal(data.deadline));
             setStep(4);
           } else {
             setStep(3);
@@ -172,13 +170,12 @@ export default function CreateProposal() {
     setIsSubmitting(true);
     try {
       const parsedAmount = parseGen(requestedAmount);
-      const deadlineDate = new Date(deadline);
       const res = await fetchApi(`/api/proposals/drafts/${draftId}/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           requested_amount: parsedAmount,
-          deadline: deadlineDate.toISOString() 
+          deadline: datetimeLocalToISO(deadline) 
         })
       });
       if (!res.ok) throw new Error("Failed to update draft");

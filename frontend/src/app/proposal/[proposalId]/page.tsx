@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { CommentsSection } from '@/components/CommentsSection';
+import { getProposalActionState } from '@/lib/proposalActions';
+
 export default function ProposalDetail() {
   const params = useParams();
   const router = useRouter();
@@ -129,6 +131,21 @@ export default function ProposalDetail() {
 
   const currentFundVote = myVotes.find(v => v.vote_type === 'fund');
   const currentReclaimVote = myVotes.find(v => v.vote_type === 'reclaim' && v.reclaim_round === proposal.reclaim_round);
+
+  const actionState = proposal ? getProposalActionState({
+    status: proposal.status,
+    isVoting,
+    hasMounted,
+    isConnected,
+    votingPower: votingPower || "0",
+    hasVotedFund: !!currentFundVote,
+    hasVotedReclaim: !!currentReclaimVote,
+    isContributor,
+    isPastDeadline,
+    resubmissionCount: proposal.resubmission_count,
+    maxResubmissions: 3, // Assuming 3 is the limit based on UI
+    isReclaimVoting
+  }) : {};
 
   const handleTx = async (funcName: string, args: any[]) => {
     if (!contractAddress) return;
@@ -478,22 +495,24 @@ export default function ProposalDetail() {
                 {/* Status 1: Open For Voting Actions */}
                 {proposal.status === 1 && (
                   <>
-                    {isVoting ? (
-                      !hasMounted || !isConnected ? (
-                        <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">Connect Wallet to Vote</div>
-                      ) : currentFundVote ? (
-                        <div className="text-center p-3 bg-accent/20 border border-accent/30 rounded-lg text-sm text-accent-light">
-                          You voted: {currentFundVote.support ? 'Yes' : 'No'}
-                        </div>
-                      ) : votingPower === "0" ? (
-                        <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">You have no voting power in this DAO</div>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-3">
-                          <Button disabled={isLocked} onClick={() => handleTx('cast_vote', [proposal.proposal_id, 'fund', true])} className="bg-accent text-white py-6 hover:bg-accent-hover">Vote Yes</Button>
-                          <Button disabled={isLocked} onClick={() => handleTx('cast_vote', [proposal.proposal_id, 'fund', false])} variant="outline" className="text-white border-zinc-700 py-6 hover:bg-zinc-800">Vote No</Button>
-                        </div>
-                      )
-                    ) : (
+                    {actionState.fundVotingState === 'CONNECT_WALLET' && (
+                      <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">Connect Wallet to Vote</div>
+                    )}
+                    {actionState.fundVotingState === 'ALREADY_VOTED' && (
+                      <div className="text-center p-3 bg-accent/20 border border-accent/30 rounded-lg text-sm text-accent-light">
+                        You voted: {currentFundVote?.support ? 'Yes' : 'No'}
+                      </div>
+                    )}
+                    {actionState.fundVotingState === 'NO_VOTING_POWER' && (
+                      <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">You have no voting power in this DAO</div>
+                    )}
+                    {actionState.fundVotingState === 'CAN_VOTE' && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button disabled={isLocked} onClick={() => handleTx('cast_vote', [proposal.proposal_id, 'fund', true])} className="bg-accent text-white py-6 hover:bg-accent-hover">Vote Yes</Button>
+                        <Button disabled={isLocked} onClick={() => handleTx('cast_vote', [proposal.proposal_id, 'fund', false])} variant="outline" className="text-white border-zinc-700 py-6 hover:bg-zinc-800">Vote No</Button>
+                      </div>
+                    )}
+                    {actionState.fundVotingState === 'CAN_FINALIZE' && (
                       <Button disabled={isLocked} onClick={() => handleTx('finalize_vote', [proposal.proposal_id])} className="w-full bg-accent text-white">Finalize Vote</Button>
                     )}
                   </>
@@ -506,16 +525,17 @@ export default function ProposalDetail() {
                        <span className="text-sm text-zinc-400">Deadline in:</span>
                        <span className="text-accent">{isPastDeadline ? 'Expired' : `${dHoursLeft}h ${dMinsLeft}m`}</span>
                     </div>
-                    {isContributor ? (
+                    {actionState.deliveryState === 'CAN_SUBMIT' && (
                       <div className="space-y-3">
                         <Input placeholder="Deliverable URL" value={deliverableUrl} onChange={e => setDeliverableUrl(e.target.value)} />
                         <Textarea placeholder="Notes (optional)" value={deliverableNotes} onChange={e => setDeliverableNotes(e.target.value)} />
                         <Button disabled={isLocked || !deliverableUrl} onClick={() => handleTx('submit_deliverable', [proposal.proposal_id, deliverableUrl, deliverableNotes])} className="w-full bg-accent text-white">Submit Deliverable</Button>
                       </div>
-                    ) : (
+                    )}
+                    {actionState.deliveryState === 'AWAITING_DELIVERY' && (
                       <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">Awaiting delivery from contributor</div>
                     )}
-                    {isPastDeadline && !isContributor && (
+                    {actionState.canReclaimExpired && (
                       <Button disabled={isLocked} onClick={() => handleTx('reclaim_expired_escrow', [proposal.proposal_id])} className="w-full bg-amber-500 hover:bg-amber-600 text-white mt-4">Reclaim Expired Escrow</Button>
                     )}
                   </>
@@ -524,10 +544,10 @@ export default function ProposalDetail() {
                 {/* Status 4: VerificationFailed Actions */}
                 {proposal.status === 4 && (
                   <>
-                    {isContributor && (
+                    {(actionState.resubmissionState === 'CAN_RESUBMIT' || actionState.resubmissionState === 'MAX_REACHED') && (
                       <div className="mb-6 p-4 border border-white/10 rounded-lg">
                         <p className="text-sm font-medium mb-2">Resubmit ({proposal.resubmission_count}/3)</p>
-                        {proposal.resubmission_count < 3 /* Assume max_resubmissions = 3, though it's on DAO */ ? (
+                        {actionState.resubmissionState === 'CAN_RESUBMIT' ? (
                           <div className="space-y-3">
                             <Input placeholder="New Deliverable URL" value={deliverableUrl} onChange={e => setDeliverableUrl(e.target.value)} />
                             <Textarea placeholder="Notes" value={deliverableNotes} onChange={e => setDeliverableNotes(e.target.value)} />
@@ -539,24 +559,24 @@ export default function ProposalDetail() {
                       </div>
                     )}
 
-                    {!isContributor && isReclaimVoting && (
-                      !hasMounted || !isConnected ? (
-                        <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">Connect Wallet to Vote</div>
-                      ) : currentReclaimVote ? (
-                        <div className="text-center p-3 bg-accent/20 border border-accent/30 rounded-lg text-sm text-accent-light">
-                          You voted: {currentReclaimVote.support ? 'Yes' : 'No'}
-                        </div>
-                      ) : votingPower === "0" ? (
-                        <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">You have no voting power in this DAO</div>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-3">
-                          <Button disabled={isLocked} onClick={() => handleTx('cast_vote', [proposal.proposal_id, 'reclaim', true])} className="bg-amber-500 text-white py-6 hover:bg-amber-600">Vote Yes (Reclaim)</Button>
-                          <Button disabled={isLocked} onClick={() => handleTx('cast_vote', [proposal.proposal_id, 'reclaim', false])} variant="outline" className="text-white border-zinc-700 py-6 hover:bg-zinc-800">Vote No (Keep)</Button>
-                        </div>
-                      )
+                    {actionState.reclaimVotingState === 'CONNECT_WALLET' && (
+                      <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">Connect Wallet to Vote</div>
                     )}
-                    
-                    {!isReclaimVoting && (
+                    {actionState.reclaimVotingState === 'ALREADY_VOTED' && (
+                      <div className="text-center p-3 bg-accent/20 border border-accent/30 rounded-lg text-sm text-accent-light">
+                        You voted: {currentReclaimVote?.support ? 'Yes' : 'No'}
+                      </div>
+                    )}
+                    {actionState.reclaimVotingState === 'NO_VOTING_POWER' && (
+                      <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">You have no voting power in this DAO</div>
+                    )}
+                    {actionState.reclaimVotingState === 'CAN_VOTE' && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button disabled={isLocked} onClick={() => handleTx('cast_vote', [proposal.proposal_id, 'reclaim', true])} className="bg-amber-500 text-white py-6 hover:bg-amber-600">Vote Yes (Reclaim)</Button>
+                        <Button disabled={isLocked} onClick={() => handleTx('cast_vote', [proposal.proposal_id, 'reclaim', false])} variant="outline" className="text-white border-zinc-700 py-6 hover:bg-zinc-800">Vote No (Keep)</Button>
+                      </div>
+                    )}
+                    {actionState.reclaimVotingState === 'CAN_FINALIZE' && (
                       <Button disabled={isLocked} onClick={() => handleTx('finalize_reclaim', [proposal.proposal_id])} className="w-full bg-amber-500 hover:bg-amber-600 text-white">Finalize Reclaim</Button>
                     )}
                   </>
@@ -564,13 +584,16 @@ export default function ProposalDetail() {
 
                 {/* Status 6: VerificationPassed Actions */}
                 {proposal.status === 6 && (
-                  isContributor ? (
-                    <Button disabled={isLocked} onClick={() => handleTx('claim_funds', [proposal.proposal_id])} className="w-full bg-green-500 hover:bg-green-600 text-white py-6">
-                      <Wallet className="w-5 h-5 mr-2" /> Claim Funds
-                    </Button>
-                  ) : (
-                    <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">Verified -- awaiting contributor claim.</div>
-                  )
+                  <>
+                    {actionState.claimState === 'CAN_CLAIM' && (
+                      <Button disabled={isLocked} onClick={() => handleTx('claim_funds', [proposal.proposal_id])} className="w-full bg-green-500 hover:bg-green-600 text-white py-6">
+                        <Wallet className="w-5 h-5 mr-2" /> Claim Funds
+                      </Button>
+                    )}
+                    {actionState.claimState === 'AWAITING_CLAIM' && (
+                      <div className="text-center p-3 bg-zinc-900 rounded-lg text-sm text-zinc-400">Verified -- awaiting contributor claim.</div>
+                    )}
+                  </>
                 )}
 
               </div>
