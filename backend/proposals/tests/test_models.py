@@ -49,15 +49,12 @@ class ProposalsModelsTest(TestCase):
             reclaim_yes_weight=Decimal("0"), reclaim_no_weight=Decimal("0"), reclaim_round=0, escrowed_amount=Decimal("0"), resubmission_count=0
         )
         
-        # Populate search vector manually for testing
-        ProposalCache.objects.update(search_vector=SearchVector('title', 'description'))
-
-        # Run full-text search
-        results = ProposalCache.objects.filter(search_vector='quantum')
+        # Run search test using Q filter since we use icontains
+        results = ProposalCache.objects.filter(title__icontains='quantum')
         self.assertEqual(results.count(), 1)
         self.assertEqual(results.first().proposal_id, 101)
 
-        results_ai = ProposalCache.objects.filter(search_vector='safety')
+        results_ai = ProposalCache.objects.filter(description__icontains='safety')
         self.assertEqual(results_ai.count(), 1)
         self.assertEqual(results_ai.first().proposal_id, 102)
 

@@ -17,6 +17,7 @@ from rest_framework import generics
 from .models import User, AuthNonce, RefreshToken
 from proposals.models import Notification
 from .serializers import NotificationSerializer
+from covenant_escrow_backend.throttles import NotificationThrottle
 
 from rest_framework.throttling import AnonRateThrottle
 
@@ -195,6 +196,7 @@ class NotificationListView(generics.ListAPIView):
 
 class NotificationReadView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [NotificationThrottle]
 
     def post(self, request, pk=None):
         notification = get_object_or_404(Notification, pk=pk)
@@ -214,6 +216,7 @@ class NotificationUnreadCountView(APIView):
 
 class NotificationMarkAllReadView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [NotificationThrottle]
 
     def post(self, request):
         Notification.objects.filter(

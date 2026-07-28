@@ -15,6 +15,11 @@ from .serializers import (
     VoteCacheSerializer,
     CommentSerializer,
 )
+from covenant_escrow_backend.throttles import (
+    CommentThrottle,
+    DraftThrottle,
+    PrepareSubmitThrottle,
+)
 
 class ProposalSearchFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
@@ -37,6 +42,11 @@ class ProposalViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ['dao_id', 'status']
     ordering_fields = ['submitted_at']
     ordering = ['-submitted_at']
+
+    def get_throttles(self):
+        if self.action == 'comments' and self.request.method == 'POST':
+            return [CommentThrottle()]
+        return super().get_throttles()
 
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
@@ -85,6 +95,7 @@ class CommentDestroyView(generics.DestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [CommentThrottle]
     
     def get_queryset(self):
         return Comment.objects.filter(author=self.request.user)
@@ -92,6 +103,7 @@ class CommentDestroyView(generics.DestroyAPIView):
 class ProposalDraftListCreateView(generics.ListCreateAPIView):
     serializer_class = ProposalDraftSerializer
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [DraftThrottle]
 
     def get_queryset(self):
         return ProposalDraft.objects.filter(dao_id=self.kwargs['dao_id'])
@@ -110,9 +122,11 @@ class ProposalDraftDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProposalDraft.objects.all()
     serializer_class = ProposalDraftSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwner]
+    throttle_classes = [DraftThrottle]
 
 class ProposalDraftPrepareSubmitView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsOwner]
+    throttle_classes = [PrepareSubmitThrottle]
 
     def post(self, request, pk=None):
         draft = get_object_or_404(ProposalDraft, pk=pk)

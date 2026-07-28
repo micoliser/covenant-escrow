@@ -65,10 +65,6 @@ class ProposalAPITests(APITestCase):
         self.assertEqual(len(response.data['results']), 0)
 
     def test_search_proposals(self):
-        # We need to manually set the search vector in tests if not using a trigger
-        from django.contrib.postgres.search import SearchVector
-        ProposalCache.objects.update(search_vector=SearchVector('title', 'description'))
-        
         url = '/api/proposals/?search=Bug'
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

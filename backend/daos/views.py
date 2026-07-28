@@ -29,6 +29,15 @@ class DaoViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ['created_at']
     ordering = ['-created_at']
 
+    def get_throttles(self):
+        if self.action == 'prepare_create' and self.request.method == 'POST':
+            from covenant_escrow_backend.throttles import PrepareSubmitThrottle
+            return [PrepareSubmitThrottle()]
+        if self.action in ['latest_proposal', 'latest_dao'] and self.request.method == 'POST':
+            from covenant_escrow_backend.throttles import RPCCallThrottle
+            return [RPCCallThrottle()]
+        return super().get_throttles()
+
     @action(detail=False, methods=['post'], url_path='prepare-create')
     def prepare_create(self, request):
         serializer = DaoPrepareCreateSerializer(data=request.data)
