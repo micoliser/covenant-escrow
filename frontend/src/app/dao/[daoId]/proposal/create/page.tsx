@@ -260,7 +260,7 @@ export default function CreateProposal() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-24 mt-24">
+    <div className="max-w-3xl mx-auto space-y-6 pb-24 mt-24 px-4 sm:px-6">
       <Link
         href={`/dao/${daoId}`}
         className="inline-flex items-center text-sm font-medium text-zinc-400 hover:text-white transition-colors mb-2"
@@ -496,7 +496,7 @@ export default function CreateProposal() {
                     <p className="text-zinc-300 font-mono text-sm whitespace-pre-wrap">{deliverableCriteria}</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-zinc-950/50 rounded-xl p-4 border border-zinc-800/50">
                       <h3 className="text-sm font-medium text-zinc-400 mb-1">Requested Amount</h3>
                       <p className="text-xl font-bold text-accent">{requestedAmount} GEN</p>

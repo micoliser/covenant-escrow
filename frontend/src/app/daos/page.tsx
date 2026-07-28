@@ -57,7 +57,7 @@ export default function DaosPage() {
   }, [fetchApi, search, ordering, myDaos, isConnected]);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 pt-24 lg:pt-32">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 pt-24 lg:pt-32">
       {/* Header */}
       <header className="mb-12">
         <h1 className="text-4xl lg:text-5xl font-display font-bold text-white mb-3 tracking-tight">

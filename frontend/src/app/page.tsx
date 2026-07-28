@@ -57,7 +57,7 @@ export default async function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative pt-14 pb-12 px-6 max-w-5xl mx-auto w-full">
+      <section className="relative pt-14 pb-12 px-4 sm:px-6 md:px-8 max-w-5xl mx-auto w-full">
         <ScrollReveal>
           <div className="text-center relative overflow-visible pt-2 pb-8">
             {/* Abstract background element spanning the whole width of the section */}
@@ -129,7 +129,7 @@ export default async function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="px-6 pb-24 relative z-10">
+      <section className="px-4 sm:px-6 md:px-8 pb-24 relative z-10">
         <ScrollReveal className="max-w-5xl mx-auto">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-display font-bold mb-4 tracking-tight">
@@ -190,7 +190,7 @@ export default async function Home() {
       </section>
 
       {/* Why Covenant Escrow */}
-      <section className="px-6 pb-24 relative z-10 bg-zinc-900/20 py-24 border-y border-zinc-800/50">
+      <section className="px-4 sm:px-6 md:px-8 pb-24 relative z-10 bg-zinc-900/20 py-24 border-y border-zinc-800/50">
         <ScrollReveal className="max-w-5xl mx-auto">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-display font-bold mb-4 tracking-tight">
@@ -244,7 +244,7 @@ export default async function Home() {
       </section>
 
       {/* DAOs Section */}
-      <section id="daos" className="px-6 py-24 relative z-10">
+      <section id="daos" className="px-4 sm:px-6 md:px-8 py-24 relative z-10">
         <ScrollReveal className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
             <div>
@@ -316,7 +316,7 @@ export default async function Home() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="px-6 py-24 relative z-10 border-t border-zinc-800/50 bg-zinc-950">
+      <section className="px-4 sm:px-6 md:px-8 py-24 relative z-10 border-t border-zinc-800/50 bg-zinc-950">
         <ScrollReveal className="max-w-5xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-display font-bold mb-6 tracking-tight">
             Ready to put your treasury to work?

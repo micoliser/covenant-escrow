@@ -210,216 +210,7 @@ export default function ProposalDetail() {
     }))
   ].sort((a, b) => a.timestamp - b.timestamp) : [];
 
-  return (
-    <div className="max-w-7xl mx-auto px-6 py-12 pt-24 lg:pt-32">
-      <button 
-        onClick={() => router.back()}
-        className="inline-flex items-center gap-2 text-zinc-400 hover:text-accent transition-colors mb-8 text-sm font-medium"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Proposals
-      </button>
-
-      {/* 2-Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Main Content Column (2/3) */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Header */}
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <StatusBadge status={proposal.status} />
-              <a href={`/dao/${proposal.dao_id}`} className="bg-zinc-800 px-2 py-0.5 rounded text-xs text-zinc-300 hover:text-accent font-medium">
-                {(proposal as any).dao_name || `DAO #${proposal.dao_id}`}
-              </a>
-              <span className="text-zinc-400 font-medium text-sm flex items-center gap-1">
-                <User className="w-4 h-4" />
-                {proposal.contributor.slice(0,6)}...{proposal.contributor.slice(-4)}
-              </span>
-              <span className="text-zinc-400 font-medium text-sm flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                {new Date(proposal.submitted_at).toLocaleDateString()}
-              </span>
-            </div>
-            <h1 className="text-4xl lg:text-5xl font-display font-bold text-white tracking-tight">
-              {proposal.title}
-            </h1>
-          </div>
-
-          {/* Conditional Alerts for Statuses */}
-          {proposal.status === 0 && proposal.screening_rejection_reason && (
-            <Card className="bg-red-500/10 border-red-500/50">
-              <CardContent className="p-6">
-                <h3 className="text-red-400 font-semibold mb-2 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" /> Screening Rejected
-                </h3>
-                <p className="text-zinc-300 whitespace-pre-wrap">{proposal.screening_rejection_reason}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {[4, 6, 7].includes(proposal.status) && proposal.verdict_summary && (
-            <Card className={proposal.status === 4 ? "bg-red-500/10 border-red-500/50" : "bg-green-500/10 border-green-500/50"}>
-              <CardContent className="p-6">
-                <h3 className={`font-semibold mb-2 flex items-center gap-2 ${proposal.status === 4 ? 'text-red-400' : 'text-green-400'}`}>
-                  {proposal.status === 4 ? <AlertTriangle className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
-                  AI Verification Verdict
-                </h3>
-                <p className="text-zinc-300 whitespace-pre-wrap">{proposal.verdict_summary}</p>
-              </CardContent>
-            </Card>
-          )}
-          
-          {proposal.status === 5 && proposal.reclaim_reason && (
-            <Card className="bg-amber-500/10 border-amber-500/50">
-              <CardContent className="p-6">
-                <h3 className="text-amber-400 font-semibold mb-2 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" /> Escrow Reclaimed
-                </h3>
-                <p className="text-zinc-300 whitespace-pre-wrap">{proposal.reclaim_reason}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Description */}
-          <section className="space-y-4">
-            <h2 className="text-2xl font-display font-semibold text-white">Description</h2>
-            <div className="text-zinc-300 text-lg space-y-4 leading-relaxed whitespace-pre-wrap">
-              {proposal.description}
-            </div>
-          </section>
-
-          {/* Deliverable Criteria Box */}
-          <Card className="border-l-4 border-l-accent">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-display font-semibold text-white mb-3 flex items-center gap-2">
-                <CheckCircle className="text-accent w-5 h-5" />
-                Deliverable Criteria
-              </h3>
-              <div className="text-zinc-300 space-y-2 leading-relaxed">
-                {proposal.deliverable_criteria}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Submitted Deliverable */}
-          {proposal.deliverable_url && (
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-display font-semibold text-white mb-3 flex items-center gap-2">
-                  <ExternalLink className="text-accent w-5 h-5" />
-                  Submitted Deliverable
-                </h3>
-                <a 
-                  href={proposal.deliverable_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors mb-4"
-                >
-                  View Deliverable Link
-                </a>
-                {proposal.delivery_notes && (
-                  <div className="p-4 bg-zinc-900 rounded-lg text-zinc-400 text-sm">
-                    {proposal.delivery_notes}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Timeline / History */}
-          <section>
-            <Card>
-              <details className="group" open>
-                <summary className="flex items-center justify-between p-4 cursor-pointer select-none">
-                  <h2 className="text-lg font-display font-semibold text-white flex items-center gap-2">
-                    <History className="w-5 h-5" />
-                    Proposal History
-                  </h2>
-                  <Clock className="w-5 h-5 text-zinc-500 group-open:rotate-180 transition-transform" />
-                </summary>
-                <div className="p-4 pt-0 border-t border-white/5 mt-2 space-y-6">
-                  {timelineEvents.length === 0 ? (
-                    <p className="text-sm text-zinc-500 text-center py-4">No events found.</p>
-                  ) : (
-                    <div className="space-y-6 pt-6">
-                      {timelineEvents.map((event, i) => {
-                        const isLast = i === timelineEvents.length - 1;
-                        let colorBadge = 'text-zinc-500';
-                        let eventText = '';
-                        let txHash = '';
-                        
-                        if (event.type === 'vote') {
-                          colorBadge = event.support ? 'text-green-400' : 'text-red-400';
-                          eventText = `${event.voter_address.slice(0, 6)}...${event.voter_address.slice(-4)} voted ${event.support ? 'Yes' : 'No'}${event.vote_type === 'reclaim' ? ' (Reclaim)' : ''} (Weight: ${formatGen(event.weight)} GEN)`;
-                        } else {
-                          const details = getStatusDetails(event.to_status as number);
-                          colorBadge = details.colorClass.split(' ')[0] || 'text-zinc-500';
-                          txHash = event.txHash;
-                          
-                          if (event.from_status === null && event.to_status === 0) {
-                            eventText = "Proposal created. AI Screening Failed.";
-                          } else if (event.from_status === null && event.to_status === 1) {
-                            eventText = "Proposal created. AI Screening Passed: Proposal opened for voting.";
-                          } else if (event.from_status === 1 && event.to_status === 3) {
-                            eventText = "Funding vote finalized. Goal reached! Funds are now securely escrowed.";
-                          } else if (event.from_status === 1 && event.to_status === 2) {
-                            eventText = "Funding vote finalized. Proposal rejected.";
-                          } else if ((event.from_status === 3 || event.from_status === 4) && event.to_status === 6) {
-                            eventText = "Contributor submitted deliverable. AI Verification Passed! Deliverable meets all criteria.";
-                          } else if ((event.from_status === 3 || event.from_status === 4) && event.to_status === 4) {
-                            eventText = `Contributor submitted deliverable. AI Verification Failed.${proposal?.verdict_summary ? ' Reason: ' + proposal.verdict_summary : ''}`;
-                          } else if (event.from_status === 4 && event.to_status === 3) {
-                            eventText = "Reclaim vote finalized. DAO voted to keep funds in escrow. Contributor can resubmit.";
-                          } else if (event.from_status === 4 && event.to_status === 5) {
-                            eventText = "Reclaim vote finalized. Funds successfully reclaimed to the DAO Treasury.";
-                          } else if (event.from_status === 3 && event.to_status === 5) {
-                            eventText = "Deadline expired. Escrowed funds were forcefully reclaimed to the DAO Treasury.";
-                          } else if (event.from_status === 6 && event.to_status === 7) {
-                            eventText = "Contributor successfully claimed the escrowed funds. Proposal complete!";
-                          } else {
-                            eventText = `Status changed to ${details.label}`;
-                          }
-                        }
-
-                        const bgBadge = colorBadge.replace('text-', 'bg-');
-                        
-                        return (
-                          <div key={event.id} className="flex gap-4 relative">
-                            <div className="flex flex-col items-center">
-                              <div className={`w-3 h-3 ${bgBadge} rounded-full mt-1.5 z-10 shadow-[0_0_10px_currentColor]`}></div>
-                              {!isLast && <div className="w-px h-full bg-white/10 absolute top-3 bottom-0 left-[5.5px]"></div>}
-                            </div>
-                            <div className="pb-6">
-                              <p className="text-sm text-zinc-500 mb-1 font-mono">
-                                {new Date(event.observed_at).toLocaleString()}
-                              </p>
-                              <p className={`text-base font-medium ${colorBadge}`}>
-                                {eventText}
-                              </p>
-                              {txHash && (
-                                <p className="text-xs text-zinc-500 font-mono break-all mt-1">
-                                  Tx: {txHash}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </details>
-            </Card>
-          </section>
-          
-          {/* Comments / Discussion Thread */}
-          <CommentsSection proposalId={proposalId} />
-        </div>
-
-        {/* Sidebar Column (1/3) */}
-        <aside className="lg:col-span-1 space-y-6">
+  const actionCard = (
           
           <Card>
             <CardContent className="p-6">
@@ -599,6 +390,224 @@ export default function ProposalDetail() {
               </div>
             </CardContent>
           </Card>
+  );
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 pt-24 lg:pt-32">
+      <button 
+        onClick={() => router.back()}
+        className="inline-flex items-center gap-2 text-zinc-400 hover:text-accent transition-colors mb-8 text-sm font-medium"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Proposals
+      </button>
+
+      {/* 2-Column Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Main Content Column (2/3) */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          {/* Header */}
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <StatusBadge status={proposal.status} />
+              <a href={`/dao/${proposal.dao_id}`} className="bg-zinc-800 px-2 py-0.5 rounded text-xs text-zinc-300 hover:text-accent font-medium">
+                {(proposal as any).dao_name || `DAO #${proposal.dao_id}`}
+              </a>
+              <span className="text-zinc-400 font-medium text-sm flex items-center gap-1">
+                <User className="w-4 h-4" />
+                {proposal.contributor.slice(0,6)}...{proposal.contributor.slice(-4)}
+              </span>
+              <span className="text-zinc-400 font-medium text-sm flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {new Date(proposal.submitted_at).toLocaleDateString()}
+              </span>
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-display font-bold text-white tracking-tight">
+              {proposal.title}
+            </h1>
+          </div>
+
+          {/* Conditional Alerts for Statuses */}
+          {proposal.status === 0 && proposal.screening_rejection_reason && (
+            <Card className="bg-red-500/10 border-red-500/50">
+              <CardContent className="p-6">
+                <h3 className="text-red-400 font-semibold mb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" /> Screening Rejected
+                </h3>
+                <p className="text-zinc-300 whitespace-pre-wrap">{proposal.screening_rejection_reason}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {[4, 6, 7].includes(proposal.status) && proposal.verdict_summary && (
+            <Card className={proposal.status === 4 ? "bg-red-500/10 border-red-500/50" : "bg-green-500/10 border-green-500/50"}>
+              <CardContent className="p-6">
+                <h3 className={`font-semibold mb-2 flex items-center gap-2 ${proposal.status === 4 ? 'text-red-400' : 'text-green-400'}`}>
+                  {proposal.status === 4 ? <AlertTriangle className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+                  AI Verification Verdict
+                </h3>
+                <p className="text-zinc-300 whitespace-pre-wrap">{proposal.verdict_summary}</p>
+              </CardContent>
+            </Card>
+          )}
+          
+          {proposal.status === 5 && proposal.reclaim_reason && (
+            <Card className="bg-amber-500/10 border-amber-500/50">
+              <CardContent className="p-6">
+                <h3 className="text-amber-400 font-semibold mb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" /> Escrow Reclaimed
+                </h3>
+                <p className="text-zinc-300 whitespace-pre-wrap">{proposal.reclaim_reason}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Description */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-display font-semibold text-white">Description</h2>
+            <div className="text-zinc-300 text-lg space-y-4 leading-relaxed whitespace-pre-wrap">
+              {proposal.description}
+            </div>
+          </section>
+
+          {/* Deliverable Criteria Box */}
+          <Card className="border-l-4 border-l-accent">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-display font-semibold text-white mb-3 flex items-center gap-2">
+                <CheckCircle className="text-accent w-5 h-5" />
+                Deliverable Criteria
+              </h3>
+              <div className="text-zinc-300 space-y-2 leading-relaxed">
+                {proposal.deliverable_criteria}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Card (Mobile Only, After Criteria) */}
+          <div className="block lg:hidden">
+            {actionCard}
+          </div>
+
+          {/* Submitted Deliverable */}
+          {proposal.deliverable_url && (
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-display font-semibold text-white mb-3 flex items-center gap-2">
+                  <ExternalLink className="text-accent w-5 h-5" />
+                  Submitted Deliverable
+                </h3>
+                <a 
+                  href={proposal.deliverable_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors mb-4"
+                >
+                  View Deliverable Link
+                </a>
+                {proposal.delivery_notes && (
+                  <div className="p-4 bg-zinc-900 rounded-lg text-zinc-400 text-sm">
+                    {proposal.delivery_notes}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Timeline / History */}
+          <section>
+            <Card>
+              <details className="group" open>
+                <summary className="flex items-center justify-between p-4 cursor-pointer select-none">
+                  <h2 className="text-lg font-display font-semibold text-white flex items-center gap-2">
+                    <History className="w-5 h-5" />
+                    Proposal History
+                  </h2>
+                  <Clock className="w-5 h-5 text-zinc-500 group-open:rotate-180 transition-transform" />
+                </summary>
+                <div className="p-4 pt-0 border-t border-white/5 mt-2 space-y-6">
+                  {timelineEvents.length === 0 ? (
+                    <p className="text-sm text-zinc-500 text-center py-4">No events found.</p>
+                  ) : (
+                    <div className="space-y-6 pt-6">
+                      {timelineEvents.map((event, i) => {
+                        const isLast = i === timelineEvents.length - 1;
+                        let colorBadge = 'text-zinc-500';
+                        let eventText = '';
+                        let txHash = '';
+                        
+                        if (event.type === 'vote') {
+                          colorBadge = event.support ? 'text-green-400' : 'text-red-400';
+                          eventText = `${event.voter_address.slice(0, 6)}...${event.voter_address.slice(-4)} voted ${event.support ? 'Yes' : 'No'}${event.vote_type === 'reclaim' ? ' (Reclaim)' : ''} (Weight: ${formatGen(event.weight)} GEN)`;
+                        } else {
+                          const details = getStatusDetails(event.to_status as number);
+                          colorBadge = details.colorClass.split(' ')[0] || 'text-zinc-500';
+                          txHash = event.txHash;
+                          
+                          if (event.from_status === null && event.to_status === 0) {
+                            eventText = "Proposal created. AI Screening Failed.";
+                          } else if (event.from_status === null && event.to_status === 1) {
+                            eventText = "Proposal created. AI Screening Passed: Proposal opened for voting.";
+                          } else if (event.from_status === 1 && event.to_status === 3) {
+                            eventText = "Funding vote finalized. Goal reached! Funds are now securely escrowed.";
+                          } else if (event.from_status === 1 && event.to_status === 2) {
+                            eventText = "Funding vote finalized. Proposal rejected.";
+                          } else if ((event.from_status === 3 || event.from_status === 4) && event.to_status === 6) {
+                            eventText = "Contributor submitted deliverable. AI Verification Passed! Deliverable meets all criteria.";
+                          } else if ((event.from_status === 3 || event.from_status === 4) && event.to_status === 4) {
+                            eventText = `Contributor submitted deliverable. AI Verification Failed.${proposal?.verdict_summary ? ' Reason: ' + proposal.verdict_summary : ''}`;
+                          } else if (event.from_status === 4 && event.to_status === 3) {
+                            eventText = "Reclaim vote finalized. DAO voted to keep funds in escrow. Contributor can resubmit.";
+                          } else if (event.from_status === 4 && event.to_status === 5) {
+                            eventText = "Reclaim vote finalized. Funds successfully reclaimed to the DAO Treasury.";
+                          } else if (event.from_status === 3 && event.to_status === 5) {
+                            eventText = "Deadline expired. Escrowed funds were forcefully reclaimed to the DAO Treasury.";
+                          } else if (event.from_status === 6 && event.to_status === 7) {
+                            eventText = "Contributor successfully claimed the escrowed funds. Proposal complete!";
+                          } else {
+                            eventText = `Status changed to ${details.label}`;
+                          }
+                        }
+
+                        const bgBadge = colorBadge.replace('text-', 'bg-');
+                        
+                        return (
+                          <div key={event.id} className="flex gap-4 relative">
+                            <div className="flex flex-col items-center">
+                              <div className={`w-3 h-3 ${bgBadge} rounded-full mt-1.5 z-10 shadow-[0_0_10px_currentColor]`}></div>
+                              {!isLast && <div className="w-px h-full bg-white/10 absolute top-3 bottom-0 left-[5.5px]"></div>}
+                            </div>
+                            <div className="pb-6">
+                              <p className="text-sm text-zinc-500 mb-1 font-mono">
+                                {new Date(event.observed_at).toLocaleString()}
+                              </p>
+                              <p className={`text-base font-medium ${colorBadge}`}>
+                                {eventText}
+                              </p>
+                              {txHash && (
+                                <p className="text-xs text-zinc-500 font-mono break-all mt-1">
+                                  Tx: {txHash}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </details>
+            </Card>
+          </section>
+          
+          {/* Comments / Discussion Thread */}
+          <CommentsSection proposalId={proposalId} />
+        </div>
+
+        {/* Sidebar Column (1/3) */}
+        <aside className="hidden lg:block lg:col-span-1 space-y-6">
+          {actionCard}
         </aside>
       </div>
     </div>

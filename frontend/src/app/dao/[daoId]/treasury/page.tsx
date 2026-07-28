@@ -143,7 +143,7 @@ export default function DaoTreasury() {
   const maxGenFunding = parseFloat(formatGen(dao.total_balance)) * (dao.funding_cap_bps / 10000);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 pt-24 lg:pt-32">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 pt-24 lg:pt-32">
       {/* Header */}
       <header className="mb-12">
         <h2 className="text-5xl font-display font-bold text-white mb-2 tracking-tight">{dao.name}</h2>
@@ -151,7 +151,7 @@ export default function DaoTreasury() {
       </header>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-12">
         <Card className="col-span-1 lg:col-span-1">
           <CardContent className="p-6">
             <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium mb-2">All Time Balance</p>

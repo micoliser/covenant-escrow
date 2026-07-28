@@ -180,7 +180,7 @@ export function NotificationsDropdown() {
       </button>
 
       {isOpen && (
-        <Card className="absolute right-0 mt-2 w-80 sm:w-96 bg-zinc-900 border border-zinc-800 shadow-2xl z-50 overflow-hidden">
+        <Card className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 bg-zinc-900 border border-zinc-800 shadow-2xl z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900">
             <h3 className="font-semibold text-white">Notifications</h3>
             {unreadCount > 0 && (

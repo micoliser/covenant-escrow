@@ -82,7 +82,7 @@ export default function DaoFeed() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 pt-24 lg:pt-32">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 pt-24 lg:pt-32">
       {/* Header */}
       {dao && (
         <>
@@ -119,7 +119,7 @@ export default function DaoFeed() {
             </div>
           </header>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-12">
             <Card>
               <CardContent className="p-4">
                 <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium mb-1">Treasury Balance</p>
