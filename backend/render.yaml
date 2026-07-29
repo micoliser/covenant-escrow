@@ -1,0 +1,53 @@
+services:
+  - type: web
+    name: covenant-escrow-api
+    env: python
+    buildCommand: "pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput"
+    startCommand: "gunicorn covenant_escrow_backend.wsgi:application"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "covenant-escrow-api.onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: GENLAYER_CONTRACT_ADDRESS
+        sync: false
+
+  - type: worker
+    name: covenant-escrow-celery
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A covenant_escrow_backend worker -l info"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: GENLAYER_CONTRACT_ADDRESS
+        sync: false
+
+  - type: worker
+    name: covenant-escrow-beat
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A covenant_escrow_backend beat -l info"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"

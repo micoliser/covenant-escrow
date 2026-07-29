@@ -266,7 +266,7 @@ export default async function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {daos.map((dao) => (
+            {daos.slice(0, 6).map((dao) => (
               <Card
                 key={dao.dao_id}
                 className="hover:border-accent hover:-translate-y-1 transition-all duration-300 group cursor-pointer h-full"
