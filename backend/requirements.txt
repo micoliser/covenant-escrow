@@ -10,3 +10,4 @@ django-filter>=24.2
 python-dotenv>=1.0
 siwe==4.4.0
 django-cors-headers>=4.4.0
+bleach==6.4.0

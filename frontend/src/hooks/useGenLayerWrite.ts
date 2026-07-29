@@ -40,8 +40,21 @@ export function useGenLayerWrite() {
         throw new Error("No wallet provider found. Please install MetaMask.");
       }
 
+      // Turbopack workaround: studionet import might be undefined due to CJS/ESM interop
+      const safeStudionet = studionet || {
+        id: 61999,
+        isStudio: true,
+        name: "Genlayer Studio Network",
+        rpcUrls: {
+          default: {
+            http: ["https://studio.genlayer.com/api"]
+          }
+        },
+        nativeCurrency: { name: "GEN Token", symbol: "GEN", decimals: 18 }
+      };
+
       const client = createClient({
-        chain: studionet,
+        chain: safeStudionet,
         account: address as `0x${string}`,
         provider,
       });

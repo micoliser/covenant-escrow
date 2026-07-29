@@ -224,7 +224,7 @@ export default function CreateDaoPage() {
         href="/daos" 
         className="inline-flex items-center text-sm font-medium text-zinc-400 hover:text-white transition-colors mb-2"
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
+        <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
         Back to DAOs
       </Link>
 
@@ -255,10 +255,10 @@ export default function CreateDaoPage() {
                       ? "bg-violet-600 text-white" 
                       : s === step 
                         ? "bg-zinc-800 border-2 border-violet-600 text-white" 
-                        : "bg-zinc-900 border-2 border-zinc-800 text-zinc-500"
+                        : "bg-zinc-900 border-2 border-zinc-800 text-zinc-400"
                   )}
                 >
-                  {s < step ? <CheckCircle2 className="h-6 w-6" /> : s}
+                  {s < step ? <CheckCircle2 className="h-6 w-6" aria-hidden="true" /> : s}
                 </div>
                 <span className={cn(
                   "absolute -bottom-6 text-xs font-medium whitespace-nowrap",
@@ -362,7 +362,7 @@ export default function CreateDaoPage() {
                             </SelectContent>
                           </Select>
                         </div>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-zinc-400">
                           Duration a proposal remains open for voting.
                         </p>
                       </div>
@@ -379,7 +379,7 @@ export default function CreateDaoPage() {
                           onChange={(e) => setMaxResubmissions(parseInt(e.target.value) || 0)}
                           className="bg-zinc-950 border-zinc-800 text-white w-full"
                         />
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-zinc-400">
                           Maximum times a rejected proposal can be resubmitted.
                         </p>
                       </div>
@@ -393,7 +393,7 @@ export default function CreateDaoPage() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger type="button" className="bg-transparent border-0 p-0 hover:bg-transparent">
-                                  <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" />
+                                  <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" aria-hidden="true" />
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs bg-zinc-800 text-zinc-200 border-zinc-700 p-3">
                                   The minimum percentage of total DAO voting weight that
@@ -441,7 +441,7 @@ export default function CreateDaoPage() {
                           step={1}
                           className="py-4"
                         />
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-zinc-400">
                           Minimum percentage of total voting weight required to participate.
                         </p>
                       </div>
@@ -453,7 +453,7 @@ export default function CreateDaoPage() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger type="button" className="bg-transparent border-0 p-0 hover:bg-transparent">
-                                  <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" />
+                                  <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" aria-hidden="true" />
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs bg-zinc-800 text-zinc-200 border-zinc-700 p-3">
                                   The percentage of participating weight that must vote
@@ -500,7 +500,7 @@ export default function CreateDaoPage() {
                           step={1}
                           className="py-4"
                         />
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-zinc-400">
                           Percentage of participating weight required to approve a proposal.
                         </p>
                       </div>
@@ -512,7 +512,7 @@ export default function CreateDaoPage() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger type="button" className="bg-transparent border-0 p-0 hover:bg-transparent">
-                                  <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" />
+                                  <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" aria-hidden="true" />
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs bg-zinc-800 text-zinc-200 border-zinc-700 p-3">
                                   The maximum percentage of the DAO&apos;s treasury that a single proposal can request.
@@ -558,7 +558,7 @@ export default function CreateDaoPage() {
                           step={1}
                           className="py-4"
                         />
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-zinc-400">
                           Maximum percentage of the treasury a proposal can request.
                         </p>
                       </div>
@@ -576,7 +576,7 @@ export default function CreateDaoPage() {
                         onChange={(e) => setMinCriteriaLength(parseInt(e.target.value) || 0)}
                         className="bg-zinc-950 border-zinc-800 text-white w-full"
                       />
-                      <p className="text-sm text-zinc-500">
+                      <p className="text-sm text-zinc-400">
                         Minimum character length for proposal deliverable criteria (0 to disable).
                       </p>
                     </div>
@@ -663,7 +663,7 @@ export default function CreateDaoPage() {
                       disabled={!isConfirmed || isSaving}
                       className="bg-violet-600 hover:bg-violet-700 text-white min-w-32"
                     >
-                      {isSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      {isSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden="true" />}
                       Submit to Blockchain
                     </Button>
                   </CardFooter>

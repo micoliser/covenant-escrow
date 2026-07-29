@@ -33,7 +33,7 @@ class DaoViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == 'prepare_create' and self.request.method == 'POST':
             from covenant_escrow_backend.throttles import PrepareSubmitThrottle
             return [PrepareSubmitThrottle()]
-        if self.action in ['latest_proposal', 'latest_dao'] and self.request.method == 'POST':
+        if self.action in ['latest_proposal', 'latest_dao', 'voting_power']:
             from covenant_escrow_backend.throttles import RPCCallThrottle
             return [RPCCallThrottle()]
         return super().get_throttles()

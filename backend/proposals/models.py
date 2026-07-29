@@ -30,6 +30,22 @@ class ProposalCache(models.Model):
     reclaim_vote_ends_at = models.DateTimeField(null=True, blank=True)
     last_synced_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        from utils.sanitization import sanitize_markdown_text
+        if self.description:
+            self.description = sanitize_markdown_text(self.description)
+        if self.deliverable_criteria:
+            self.deliverable_criteria = sanitize_markdown_text(self.deliverable_criteria)
+        if self.delivery_notes:
+            self.delivery_notes = sanitize_markdown_text(self.delivery_notes)
+        if self.verdict_summary:
+            self.verdict_summary = sanitize_markdown_text(self.verdict_summary)
+        if self.screening_rejection_reason:
+            self.screening_rejection_reason = sanitize_markdown_text(self.screening_rejection_reason)
+        if self.reclaim_reason:
+            self.reclaim_reason = sanitize_markdown_text(self.reclaim_reason)
+        super().save(*args, **kwargs)
+
 class ProposalDraft(models.Model):
     contributor = models.ForeignKey(User, on_delete=models.CASCADE)
     dao_id = models.BigIntegerField()
@@ -39,6 +55,14 @@ class ProposalDraft(models.Model):
     requested_amount = models.DecimalField(max_digits=78, decimal_places=0, null=True, blank=True)
     deadline = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        from utils.sanitization import sanitize_markdown_text
+        if self.description:
+            self.description = sanitize_markdown_text(self.description)
+        if self.deliverable_criteria:
+            self.deliverable_criteria = sanitize_markdown_text(self.deliverable_criteria)
+        super().save(*args, **kwargs)
 
 class VoteCache(models.Model):
     proposal_id = models.BigIntegerField()
@@ -58,6 +82,12 @@ class Comment(models.Model):
     body = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
     is_hidden = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        from utils.sanitization import sanitize_markdown_text
+        if self.body:
+            self.body = sanitize_markdown_text(self.body)
+        super().save(*args, **kwargs)
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')

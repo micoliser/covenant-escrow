@@ -22,6 +22,7 @@ export interface Notification {
 export function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const { fetchApi } = useApi();
   const { isAuthenticated } = useAuth();
   const { isConnected } = useAccount();
@@ -123,6 +124,22 @@ export function NotificationsDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+
   if (!hasMounted || !isConnected || !isAuthenticated) {
     return null; // Don't render for logged out users
   }
@@ -143,25 +160,25 @@ export function NotificationsDropdown() {
   const getNotificationDetails = (type: string) => {
     switch(type) {
       case 'status_rejected': 
-        return { message: 'Your proposal was rejected', color: 'text-red-400 bg-red-400/10', icon: <XCircle className="w-4 h-4" /> };
+        return { message: 'Your proposal was rejected', color: 'text-red-400 bg-red-400/10', icon: <XCircle className="w-4 h-4" aria-hidden="true" /> };
       case 'status_approved': 
-        return { message: 'Your proposal is open for voting', color: 'text-accent bg-accent/10', icon: <CheckCircle className="w-4 h-4" /> };
+        return { message: 'Your proposal is open for voting', color: 'text-accent bg-accent/10', icon: <CheckCircle className="w-4 h-4" aria-hidden="true" /> };
       case 'status_escrowed': 
-        return { message: 'Your proposal was escrowed', color: 'text-amber-500 bg-amber-500/10', icon: <Lock className="w-4 h-4" /> };
+        return { message: 'Your proposal was escrowed', color: 'text-amber-500 bg-amber-500/10', icon: <Lock className="w-4 h-4" aria-hidden="true" /> };
       case 'status_vote_failed': 
-        return { message: 'The vote for your proposal failed', color: 'text-zinc-400 bg-zinc-400/10', icon: <ThumbsDown className="w-4 h-4" /> };
+        return { message: 'The vote for your proposal failed', color: 'text-zinc-400 bg-zinc-400/10', icon: <ThumbsDown className="w-4 h-4" aria-hidden="true" /> };
       case 'status_verification_failed': 
-        return { message: 'Deliverable verification failed', color: 'text-red-400 bg-red-400/10', icon: <AlertTriangle className="w-4 h-4" /> };
+        return { message: 'Deliverable verification failed', color: 'text-red-400 bg-red-400/10', icon: <AlertTriangle className="w-4 h-4" aria-hidden="true" /> };
       case 'status_verification_passed': 
-        return { message: 'Deliverable verification passed', color: 'text-emerald-400 bg-emerald-400/10', icon: <FileCheck className="w-4 h-4" /> };
+        return { message: 'Deliverable verification passed', color: 'text-emerald-400 bg-emerald-400/10', icon: <FileCheck className="w-4 h-4" aria-hidden="true" /> };
       case 'status_reclaimed': 
-        return { message: 'Funds were reclaimed by the DAO', color: 'text-zinc-400 bg-zinc-400/10', icon: <CornerUpLeft className="w-4 h-4" /> };
+        return { message: 'Funds were reclaimed by the DAO', color: 'text-zinc-400 bg-zinc-400/10', icon: <CornerUpLeft className="w-4 h-4" aria-hidden="true" /> };
       case 'new_comment': 
-        return { message: 'New comment on your proposal', color: 'text-zinc-300 bg-zinc-700/20', icon: <MessageCircle className="w-4 h-4" /> };
+        return { message: 'New comment on your proposal', color: 'text-zinc-300 bg-zinc-700/20', icon: <MessageCircle className="w-4 h-4" aria-hidden="true" /> };
       case 'new_proposal_in_dao': 
-        return { message: 'New proposal opened for voting', color: 'text-zinc-300 bg-zinc-700/20', icon: <FilePlus className="w-4 h-4" /> };
+        return { message: 'New proposal opened for voting', color: 'text-zinc-300 bg-zinc-700/20', icon: <FilePlus className="w-4 h-4" aria-hidden="true" /> };
       default: 
-        return { message: 'New notification', color: 'text-zinc-400 bg-zinc-800', icon: <BellRing className="w-4 h-4" /> };
+        return { message: 'New notification', color: 'text-zinc-400 bg-zinc-800', icon: <BellRing className="w-4 h-4" aria-hidden="true" /> };
     }
   };
 
@@ -171,7 +188,7 @@ export function NotificationsDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative flex items-center justify-center text-zinc-400 hover:text-white transition-colors p-2 rounded-full hover:bg-zinc-800/50"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-5 h-5" aria-hidden="true" />
         {unreadCount > 0 && (
           <span className="absolute top-1 right-1 flex min-w-[16px] h-[16px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold leading-none text-white ring-2 ring-zinc-950">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -233,7 +250,7 @@ export function NotificationsDropdown() {
                         <p className={`text-sm ${!notification.read_at ? 'text-white font-medium' : 'text-zinc-300'}`}>
                           {details.message}
                         </p>
-                        <p className="text-xs text-zinc-500 mt-1">
+                        <p className="text-xs text-zinc-400 mt-1">
                           {formatDistanceToNow(notification.created_at)}
                         </p>
                       </div>
@@ -242,7 +259,7 @@ export function NotificationsDropdown() {
                 })}
               </div>
             ) : (
-              <div className="p-8 text-center text-zinc-500 text-sm">
+              <div className="p-8 text-center text-zinc-400 text-sm">
                 No notifications yet.
               </div>
             )}

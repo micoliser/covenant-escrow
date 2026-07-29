@@ -12,6 +12,14 @@ import { MessageSquare, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { formatDistanceToNow } from '@/lib/date';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Comment {
   id: number;
@@ -133,7 +141,7 @@ export function CommentsSection({ proposalId }: CommentsSectionProps) {
     return (
       <section className="space-y-4">
         <h2 className="text-2xl font-display font-semibold text-white flex items-center gap-2">
-          <MessageSquare className="w-5 h-5" />
+          <MessageSquare className="w-5 h-5" aria-hidden="true" />
           Discussion
         </h2>
         <SkeletonCard />
@@ -144,7 +152,7 @@ export function CommentsSection({ proposalId }: CommentsSectionProps) {
   return (
     <section className="space-y-4">
       <h2 className="text-2xl font-display font-semibold text-white flex items-center gap-2">
-        <MessageSquare className="w-5 h-5" />
+        <MessageSquare className="w-5 h-5" aria-hidden="true" />
         Discussion
       </h2>
 
@@ -159,13 +167,14 @@ export function CommentsSection({ proposalId }: CommentsSectionProps) {
           ) : (
             <div className="space-y-3">
               <Textarea 
+                aria-label="New comment"
                 placeholder="Add to the discussion..."
                 value={newComment}
                 onChange={e => setNewComment(e.target.value)}
                 className="min-h-[100px] bg-zinc-950/50 border-zinc-800 text-zinc-300 resize-y"
               />
               <div className="flex justify-between items-center">
-                <span className={`text-xs font-medium ${newComment.length > MAX_CHARS ? 'text-red-400' : 'text-zinc-500'}`}>
+                <span className={`text-xs font-medium ${newComment.length > MAX_CHARS ? 'text-red-400' : 'text-zinc-400'}`}>
                   {newComment.length} / {MAX_CHARS}
                 </span>
                 <Button 
@@ -184,7 +193,7 @@ export function CommentsSection({ proposalId }: CommentsSectionProps) {
       {/* Comments List */}
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <p className="text-sm text-zinc-500 text-center py-8">No comments yet. Be the first to start the discussion!</p>
+          <p className="text-sm text-zinc-400 text-center py-8">No comments yet. Be the first to start the discussion!</p>
         ) : (
           comments.map(comment => (
             <Card key={comment.id} className="bg-zinc-900/50">
@@ -194,17 +203,18 @@ export function CommentsSection({ proposalId }: CommentsSectionProps) {
                     <span className="font-mono font-medium text-zinc-300 text-sm bg-zinc-800 px-2 py-1 rounded">
                       {comment.author.slice(0, 6)}...{comment.author.slice(-4)}
                     </span>
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-zinc-400">
                       {formatDistanceToNow(comment.created_at)}
                     </span>
                   </div>
                   {hasMounted && address && comment.author.toLowerCase() === address.toLowerCase() && (
                     <button 
                       onClick={() => confirmDelete(comment.id)}
-                      className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+                      className="text-zinc-400 hover:text-red-400 transition-colors p-1"
                       title="Delete comment"
+                      aria-label="Delete comment"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
                     </button>
                   )}
                 </div>
@@ -230,33 +240,31 @@ export function CommentsSection({ proposalId }: CommentsSectionProps) {
         )}
       </div>
 
-      {commentToDelete !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <Card className="w-full max-w-sm bg-zinc-900 border-zinc-800 shadow-2xl">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-display font-semibold text-white mb-2">Delete Comment</h3>
-              <p className="text-zinc-400 text-sm mb-6">
-                Are you sure you want to delete this comment? This action cannot be undone.
-              </p>
-              <div className="flex justify-end gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setCommentToDelete(null)}
-                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleDeleteComment}
-                  className="bg-red-500 hover:bg-red-600 text-white"
-                >
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog open={commentToDelete !== null} onOpenChange={(open) => !open && setCommentToDelete(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Delete Comment</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this comment? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={() => setCommentToDelete(null)}
+              className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDeleteComment}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

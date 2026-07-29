@@ -6,7 +6,7 @@ import { useApi } from '@/hooks/useApi';
 import { useAccount } from 'wagmi';
 import { useHasMounted } from '@/hooks/useHasMounted';
 import { useTransaction } from '@/hooks/useTransaction';
-import { Proposal, ProposalHistoryEvent, ProposalStatus } from '@/types';
+import { Proposal, ProposalHistoryEvent, ProposalStatus, Dao } from '@/types';
 import { formatGen } from '@/lib/formatGen';
 import { SkeletonPageHeader, SkeletonCard } from '@/components/Skeletons';
 import { StatusBadge, getStatusDetails } from '@/components/StatusBadge';
@@ -31,6 +31,7 @@ export default function ProposalDetail() {
   const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [dao, setDao] = useState<Dao | null>(null);
   const [history, setHistory] = useState<ProposalHistoryEvent[]>([]);
   const [allVotes, setAllVotes] = useState<any[]>([]);
   const [myVotes, setMyVotes] = useState<any[]>([]);
@@ -63,6 +64,12 @@ export default function ProposalDetail() {
       if (propRes.ok) {
         propData = await propRes.json();
         setProposal(propData);
+
+        // Fetch the parent DAO config (e.g. for max_resubmissions)
+        const daoRes = await fetchApi(`/api/daos/${propData.dao_id}/`);
+        if (daoRes.ok) {
+          setDao(await daoRes.json());
+        }
       }
       if (histRes.ok) {
         const histData = await histRes.json();
@@ -143,7 +150,7 @@ export default function ProposalDetail() {
     isContributor,
     isPastDeadline,
     resubmissionCount: proposal.resubmission_count,
-    maxResubmissions: 3, // Assuming 3 is the limit based on UI
+    maxResubmissions: dao ? dao.max_resubmissions : 3,
     isReclaimVoting
   }) : {};
 
@@ -221,7 +228,7 @@ export default function ProposalDetail() {
                     {formatGen(proposal.requested_amount)} <span className="text-xl text-zinc-400">GEN</span>
                   </p>
                 </div>
-                <Wallet className="w-8 h-8 text-accent opacity-80" />
+                <Wallet className="w-8 h-8 text-accent opacity-80" aria-hidden="true" />
               </div>
               
               {/* Status 1 & 2: Funding Vote Progress */}
@@ -234,7 +241,7 @@ export default function ProposalDetail() {
                     isVoting ? (
                       <div className="bg-zinc-900 rounded-lg p-4 border border-white/5 flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2 text-white">
-                          <Clock className="w-5 h-5 text-zinc-400" />
+                          <Clock className="w-5 h-5 text-zinc-400" aria-hidden="true" />
                           <span className="text-sm font-medium">Voting Ends in</span>
                         </div>
                         <span className="text-lg font-medium text-accent tabular-nums">
@@ -264,7 +271,7 @@ export default function ProposalDetail() {
                   {isReclaimVoting ? (
                     <div className="bg-zinc-900 rounded-lg p-4 border border-white/5 flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2 text-white">
-                        <Clock className="w-5 h-5 text-zinc-400" />
+                        <Clock className="w-5 h-5 text-zinc-400" aria-hidden="true" />
                         <span className="text-sm font-medium">Reclaim Ends in</span>
                       </div>
                       <span className="text-lg font-medium text-amber-400 tabular-nums">
@@ -378,7 +385,7 @@ export default function ProposalDetail() {
                   <>
                     {actionState.claimState === 'CAN_CLAIM' && (
                       <Button disabled={isLocked} onClick={() => handleTx('claim_funds', [proposal.proposal_id])} className="w-full bg-green-500 hover:bg-green-600 text-white py-6">
-                        <Wallet className="w-5 h-5 mr-2" /> Claim Funds
+                        <Wallet className="w-5 h-5 mr-2" aria-hidden="true" /> Claim Funds
                       </Button>
                     )}
                     {actionState.claimState === 'AWAITING_CLAIM' && (
@@ -398,7 +405,7 @@ export default function ProposalDetail() {
         onClick={() => router.back()}
         className="inline-flex items-center gap-2 text-zinc-400 hover:text-accent transition-colors mb-8 text-sm font-medium"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4" aria-hidden="true" />
         Back to Proposals
       </button>
 
@@ -416,11 +423,11 @@ export default function ProposalDetail() {
                 {(proposal as any).dao_name || `DAO #${proposal.dao_id}`}
               </a>
               <span className="text-zinc-400 font-medium text-sm flex items-center gap-1">
-                <User className="w-4 h-4" />
+                <User className="w-4 h-4" aria-hidden="true" />
                 {proposal.contributor.slice(0,6)}...{proposal.contributor.slice(-4)}
               </span>
               <span className="text-zinc-400 font-medium text-sm flex items-center gap-1">
-                <Clock className="w-4 h-4" />
+                <Clock className="w-4 h-4" aria-hidden="true" />
                 {new Date(proposal.submitted_at).toLocaleDateString()}
               </span>
             </div>
@@ -434,7 +441,7 @@ export default function ProposalDetail() {
             <Card className="bg-red-500/10 border-red-500/50">
               <CardContent className="p-6">
                 <h3 className="text-red-400 font-semibold mb-2 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" /> Screening Rejected
+                  <AlertTriangle className="w-5 h-5" aria-hidden="true" /> Screening Rejected
                 </h3>
                 <p className="text-zinc-300 whitespace-pre-wrap">{proposal.screening_rejection_reason}</p>
               </CardContent>
@@ -445,7 +452,7 @@ export default function ProposalDetail() {
             <Card className={proposal.status === 4 ? "bg-red-500/10 border-red-500/50" : "bg-green-500/10 border-green-500/50"}>
               <CardContent className="p-6">
                 <h3 className={`font-semibold mb-2 flex items-center gap-2 ${proposal.status === 4 ? 'text-red-400' : 'text-green-400'}`}>
-                  {proposal.status === 4 ? <AlertTriangle className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+                  {proposal.status === 4 ? <AlertTriangle className="w-5 h-5" aria-hidden="true" /> : <CheckCircle className="w-5 h-5" aria-hidden="true" />}
                   AI Verification Verdict
                 </h3>
                 <p className="text-zinc-300 whitespace-pre-wrap">{proposal.verdict_summary}</p>
@@ -457,7 +464,7 @@ export default function ProposalDetail() {
             <Card className="bg-amber-500/10 border-amber-500/50">
               <CardContent className="p-6">
                 <h3 className="text-amber-400 font-semibold mb-2 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" /> Escrow Reclaimed
+                  <AlertTriangle className="w-5 h-5" aria-hidden="true" /> Escrow Reclaimed
                 </h3>
                 <p className="text-zinc-300 whitespace-pre-wrap">{proposal.reclaim_reason}</p>
               </CardContent>
@@ -476,7 +483,7 @@ export default function ProposalDetail() {
           <Card className="border-l-4 border-l-accent">
             <CardContent className="p-6">
               <h3 className="text-lg font-display font-semibold text-white mb-3 flex items-center gap-2">
-                <CheckCircle className="text-accent w-5 h-5" />
+                <CheckCircle className="text-accent w-5 h-5" aria-hidden="true" />
                 Deliverable Criteria
               </h3>
               <div className="text-zinc-300 space-y-2 leading-relaxed">
@@ -495,7 +502,7 @@ export default function ProposalDetail() {
             <Card>
               <CardContent className="p-6">
                 <h3 className="text-lg font-display font-semibold text-white mb-3 flex items-center gap-2">
-                  <ExternalLink className="text-accent w-5 h-5" />
+                  <ExternalLink className="text-accent w-5 h-5" aria-hidden="true" />
                   Submitted Deliverable
                 </h3>
                 <a 
@@ -521,19 +528,19 @@ export default function ProposalDetail() {
               <details className="group" open>
                 <summary className="flex items-center justify-between p-4 cursor-pointer select-none">
                   <h2 className="text-lg font-display font-semibold text-white flex items-center gap-2">
-                    <History className="w-5 h-5" />
+                    <History className="w-5 h-5" aria-hidden="true" />
                     Proposal History
                   </h2>
-                  <Clock className="w-5 h-5 text-zinc-500 group-open:rotate-180 transition-transform" />
+                  <Clock className="w-5 h-5 text-zinc-400 group-open:rotate-180 transition-transform" aria-hidden="true" />
                 </summary>
                 <div className="p-4 pt-0 border-t border-white/5 mt-2 space-y-6">
                   {timelineEvents.length === 0 ? (
-                    <p className="text-sm text-zinc-500 text-center py-4">No events found.</p>
+                    <p className="text-sm text-zinc-400 text-center py-4">No events found.</p>
                   ) : (
                     <div className="space-y-6 pt-6">
                       {timelineEvents.map((event, i) => {
                         const isLast = i === timelineEvents.length - 1;
-                        let colorBadge = 'text-zinc-500';
+                        let colorBadge = 'text-zinc-400';
                         let eventText = '';
                         let txHash = '';
                         
@@ -542,7 +549,7 @@ export default function ProposalDetail() {
                           eventText = `${event.voter_address.slice(0, 6)}...${event.voter_address.slice(-4)} voted ${event.support ? 'Yes' : 'No'}${event.vote_type === 'reclaim' ? ' (Reclaim)' : ''} (Weight: ${formatGen(event.weight)} GEN)`;
                         } else {
                           const details = getStatusDetails(event.to_status as number);
-                          colorBadge = details.colorClass.split(' ')[0] || 'text-zinc-500';
+                          colorBadge = details.colorClass.split(' ')[0] || 'text-zinc-400';
                           txHash = event.txHash;
                           
                           if (event.from_status === null && event.to_status === 0) {
@@ -579,14 +586,14 @@ export default function ProposalDetail() {
                               {!isLast && <div className="w-px h-full bg-white/10 absolute top-3 bottom-0 left-[5.5px]"></div>}
                             </div>
                             <div className="pb-6">
-                              <p className="text-sm text-zinc-500 mb-1 font-mono">
+                              <p className="text-sm text-zinc-400 mb-1 font-mono">
                                 {new Date(event.observed_at).toLocaleString()}
                               </p>
                               <p className={`text-base font-medium ${colorBadge}`}>
                                 {eventText}
                               </p>
                               {txHash && (
-                                <p className="text-xs text-zinc-500 font-mono break-all mt-1">
+                                <p className="text-xs text-zinc-400 font-mono break-all mt-1">
                                   Tx: {txHash}
                                 </p>
                               )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ConnectWallet } from "./ConnectWallet";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,8 @@ import { Menu, X } from "lucide-react";
 export function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const toggleBtnRef = useRef<HTMLButtonElement>(null);
 
   // Close mobile menu when pathname changes
   useEffect(() => {
@@ -27,6 +29,45 @@ export function Navbar() {
     return () => {
       document.body.style.overflow = "unset";
     };
+  }, [isMobileMenuOpen]);
+
+  // Trap focus and handle Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isMobileMenuOpen) return;
+      
+      if (e.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+        toggleBtnRef.current?.focus();
+        return;
+      }
+      
+      if (e.key === 'Tab') {
+        const focusableElements = menuRef.current?.querySelectorAll(
+          'a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])'
+        ) as NodeListOf<HTMLElement>;
+        
+        if (!focusableElements || focusableElements.length === 0) return;
+        
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isMobileMenuOpen]);
 
   const navLinks: { name: string; href: string; disabled?: boolean }[] = [
@@ -73,7 +114,7 @@ export function Navbar() {
                 >
                   {link.name}
                   {link.disabled && (
-                    <span className="ml-2 text-[10px] uppercase tracking-wider bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-sm">
+                    <span className="ml-2 text-[10px] uppercase tracking-wider bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-sm">
                       Soon
                     </span>
                   )}
@@ -89,11 +130,12 @@ export function Navbar() {
             </div>
             
             <button 
+              ref={toggleBtnRef}
               className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
             >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMobileMenuOpen ? <X className="w-6 h-6" aria-hidden="true" /> : <Menu className="w-6 h-6" aria-hidden="true" />}
             </button>
           </div>
         </div>
@@ -101,6 +143,7 @@ export function Navbar() {
 
       {/* Mobile Menu Overlay */}
       <div 
+        ref={menuRef}
         className={cn(
           "fixed inset-0 z-40 bg-zinc-950/95 backdrop-blur-xl transition-all duration-300 md:hidden flex flex-col pt-24 px-6",
           isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
@@ -124,7 +167,7 @@ export function Navbar() {
             >
               {link.name}
               {link.disabled && (
-                <span className="text-[10px] uppercase tracking-wider bg-zinc-800 text-zinc-500 px-2 py-1 rounded-sm">
+                <span className="text-[10px] uppercase tracking-wider bg-zinc-800 text-zinc-400 px-2 py-1 rounded-sm">
                   Soon
                 </span>
               )}

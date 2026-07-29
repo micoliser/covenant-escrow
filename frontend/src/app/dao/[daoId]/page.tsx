@@ -105,7 +105,7 @@ export default function DaoFeed() {
                   onClick={() => router.push(`/dao/${daoId}/settings`)}
                   className="flex items-center gap-2 px-6 py-6 rounded-xl text-sm font-medium border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800 transition-colors w-full sm:w-auto justify-center"
                 >
-                  <Settings className="w-5 h-5" />
+                  <Settings className="w-5 h-5" aria-hidden="true" />
                   Settings
                 </Button>
               )}
@@ -113,7 +113,7 @@ export default function DaoFeed() {
                 onClick={() => router.push(`/dao/${daoId}/proposal/create`)}
                 className="bg-accent hover:bg-accent-hover text-white flex items-center gap-2 px-6 py-6 rounded-xl text-sm font-medium shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-colors w-full sm:w-auto justify-center"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-5 h-5" aria-hidden="true" />
                 Create Proposal
               </Button>
             </div>
@@ -138,7 +138,7 @@ export default function DaoFeed() {
               <CardContent className="p-4">
                 <p className="text-zinc-400 text-xs uppercase tracking-wider font-medium mb-1">Total / Active</p>
                 <p className="text-xl font-display font-semibold text-white tabular-nums">
-                  {dao.proposal_count} <span className="text-zinc-500 text-base font-normal">/ {dao.active_proposal_count || 0}</span>
+                  {dao.proposal_count} <span className="text-zinc-400 text-base font-normal">/ {dao.active_proposal_count || 0}</span>
                 </p>
               </CardContent>
             </Card>
@@ -165,13 +165,13 @@ export default function DaoFeed() {
       {/* Controls */}
       <div className="flex flex-col md:flex-row gap-4 mb-8 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 w-5 h-5" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5" aria-hidden="true" />
           <input 
             type="text" 
             placeholder="Search proposals..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent placeholder:text-zinc-500 transition-colors"
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent placeholder:text-zinc-400 transition-colors"
           />
         </div>
         <div className="relative w-full md:w-64">
@@ -187,7 +187,7 @@ export default function DaoFeed() {
             <option value={ProposalStatus.VERIFICATION_FAILED}>Verification Failed</option>
             <option value={ProposalStatus.REJECTED}>Rejected</option>
           </select>
-          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none w-5 h-5" />
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none w-5 h-5" aria-hidden="true" />
         </div>
         
         <div className="relative w-full md:w-48">
@@ -199,7 +199,7 @@ export default function DaoFeed() {
             <option value="-submitted_at">Most Recent</option>
             <option value="submitted_at">Oldest First</option>
           </select>
-          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none w-5 h-5" />
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none w-5 h-5" aria-hidden="true" />
         </div>
 
         {hasMounted && isConnected && (
@@ -224,7 +224,7 @@ export default function DaoFeed() {
           <div className="space-y-4"><SkeletonCard /><SkeletonCard /></div>
         ) : proposals.length === 0 ? (
           <div className="text-center py-16 bg-zinc-900/30 border border-zinc-800/50 rounded-2xl border-dashed">
-            <p className="text-zinc-500">No proposals found matching your criteria.</p>
+            <p className="text-zinc-400">No proposals found matching your criteria.</p>
           </div>
         ) : (
           proposals.map((prop) => {
@@ -232,7 +232,7 @@ export default function DaoFeed() {
             // Map statuses to Stitch classes
             let borderColor = "border-white/5 border-l-4 border-l-zinc-700";
             let statusBadge = null;
-            let statusTextAccent = "text-zinc-500";
+            let statusTextAccent = "text-zinc-400";
             
             if (prop.status === ProposalStatus.OPEN_FOR_VOTING) {
               borderColor = "border-white/5 border-l-4 border-l-accent";
@@ -248,7 +248,7 @@ export default function DaoFeed() {
               statusTextAccent = "text-amber-500";
               statusBadge = (
                 <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/30 gap-1.5 uppercase tracking-wider">
-                  <Lock className="w-3.5 h-3.5" />
+                  <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                   Escrowed
                 </Badge>
               );
@@ -257,7 +257,7 @@ export default function DaoFeed() {
               statusTextAccent = "text-red-500";
               statusBadge = (
                 <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/30 gap-1.5 uppercase tracking-wider">
-                  <AlertCircle className="w-3.5 h-3.5" />
+                  <AlertCircle className="w-3.5 h-3.5" aria-hidden="true" />
                   Verification Failed
                 </Badge>
               );
@@ -266,16 +266,16 @@ export default function DaoFeed() {
               statusTextAccent = "text-green-500";
               statusBadge = (
                 <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30 gap-1.5 uppercase tracking-wider">
-                  <CheckCircle className="w-3.5 h-3.5" />
+                  <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
                   Released
                 </Badge>
               );
             } else if (prop.status === ProposalStatus.RECLAIMED) {
               borderColor = "border-white/5 border-l-4 border-l-zinc-500";
-              statusTextAccent = "text-zinc-500";
+              statusTextAccent = "text-zinc-400";
               statusBadge = (
                 <Badge variant="outline" className="bg-zinc-800 text-zinc-400 border-zinc-700 gap-1.5 uppercase tracking-wider">
-                  <History className="w-3.5 h-3.5" />
+                  <History className="w-3.5 h-3.5" aria-hidden="true" />
                   Reclaimed
                 </Badge>
               );
@@ -284,16 +284,16 @@ export default function DaoFeed() {
               statusTextAccent = "text-red-500";
               statusBadge = (
                 <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/30 gap-1.5 uppercase tracking-wider">
-                  <AlertCircle className="w-3.5 h-3.5" />
+                  <AlertCircle className="w-3.5 h-3.5" aria-hidden="true" />
                   Rejected
                 </Badge>
               );
             } else if (prop.status === ProposalStatus.VOTE_FAILED) {
               borderColor = "border-white/5 border-l-4 border-l-zinc-500";
-              statusTextAccent = "text-zinc-500";
+              statusTextAccent = "text-zinc-400";
               statusBadge = (
                 <Badge variant="outline" className="bg-zinc-800 text-zinc-400 border-zinc-700 gap-1.5 uppercase tracking-wider">
-                  <AlertCircle className="w-3.5 h-3.5" />
+                  <AlertCircle className="w-3.5 h-3.5" aria-hidden="true" />
                   Vote Failed
                 </Badge>
               );
@@ -302,7 +302,7 @@ export default function DaoFeed() {
               statusTextAccent = "text-green-500";
               statusBadge = (
                 <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30 gap-1.5 uppercase tracking-wider">
-                  <CheckCircle className="w-3.5 h-3.5" />
+                  <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
                   Verified
                 </Badge>
               );
@@ -310,7 +310,7 @@ export default function DaoFeed() {
               // Draft / Submitted / Unknown
               statusBadge = (
                 <Badge variant="outline" className="bg-zinc-800 text-zinc-400 border-zinc-700 gap-1.5 uppercase tracking-wider">
-                  <Clock className="w-3.5 h-3.5" />
+                  <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                   {prop.status}
                 </Badge>
               );
@@ -338,7 +338,7 @@ export default function DaoFeed() {
                   <div className="flex flex-wrap items-center gap-x-8 gap-y-4 mt-6 pt-4 border-t border-zinc-800">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden">
-                        <User className="w-3.5 h-3.5 text-zinc-400" />
+                        <User className="w-3.5 h-3.5 text-zinc-400" aria-hidden="true" />
                       </div>
                       <span className="text-sm text-zinc-400 font-mono">
                         {prop.contributor.slice(0,6)}...{prop.contributor.slice(-4)}
@@ -346,14 +346,14 @@ export default function DaoFeed() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Coins className="w-4 h-4 text-zinc-400" />
+                      <Coins className="w-4 h-4 text-zinc-400" aria-hidden="true" />
                       <span className="text-lg font-display font-semibold text-white tabular-nums">
                         {formatGen(prop.requested_amount)} GEN
                       </span>
                     </div>
                     
                     <div className={`flex items-center gap-2 ml-auto ${statusTextAccent}`}>
-                      <Clock className="w-4 h-4" />
+                      <Clock className="w-4 h-4" aria-hidden="true" />
                       {/* eslint-disable-next-line react-hooks/purity */}
                       <span className="text-sm font-medium">Ends in {Math.max(0, Math.floor((new Date(prop.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}d</span>
                     </div>

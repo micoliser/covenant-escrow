@@ -78,6 +78,17 @@ describe('getProposalActionState', () => {
         expect(getProposalActionState({ ...defaultParams, status: 4, isContributor: true, resubmissionCount: 3 }))
           .toMatchObject({ resubmissionState: 'MAX_REACHED' });
       });
+
+      it('respects non-default maxResubmissions configured by DAO', () => {
+        // Here the max limit is 5 instead of default 3.
+        // At 3, they can still resubmit.
+        expect(getProposalActionState({ ...defaultParams, status: 4, isContributor: true, resubmissionCount: 3, maxResubmissions: 5 }))
+          .toMatchObject({ resubmissionState: 'CAN_RESUBMIT' });
+
+        // At 5, they hit the max limit.
+        expect(getProposalActionState({ ...defaultParams, status: 4, isContributor: true, resubmissionCount: 5, maxResubmissions: 5 }))
+          .toMatchObject({ resubmissionState: 'MAX_REACHED' });
+      });
     });
 
     describe('Non-contributor reclaim voting (active)', () => {

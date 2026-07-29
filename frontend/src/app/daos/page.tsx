@@ -74,7 +74,7 @@ export default function DaosPage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-indigo-400" />
+                <ShieldCheck className="w-5 h-5 text-indigo-400" aria-hidden="true" />
               </div>
               <h3 className="text-zinc-400 font-medium">Active Ecosystems</h3>
             </div>
@@ -88,7 +88,7 @@ export default function DaosPage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-400" />
+                <Users className="w-5 h-5 text-blue-400" aria-hidden="true" />
               </div>
               <h3 className="text-zinc-400 font-medium">Total Members</h3>
             </div>
@@ -102,7 +102,7 @@ export default function DaosPage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <Vault className="w-5 h-5 text-green-400" />
+                <Vault className="w-5 h-5 text-green-400" aria-hidden="true" />
               </div>
               <h3 className="text-zinc-400 font-medium">Platform TVL</h3>
             </div>
@@ -116,13 +116,13 @@ export default function DaosPage() {
       {/* Controls */}
       <div className="flex flex-col md:flex-row gap-4 mb-8 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 w-5 h-5" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5" aria-hidden="true" />
           <input 
             type="text" 
             placeholder="Search DAOs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent placeholder:text-zinc-500 transition-colors"
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent placeholder:text-zinc-400 transition-colors"
           />
         </div>
 
@@ -136,7 +136,7 @@ export default function DaosPage() {
             <option value="-created_at">Most Recent</option>
             <option value="created_at">Oldest First</option>
           </select>
-          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none w-5 h-5" />
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none w-5 h-5" aria-hidden="true" />
         </div>
 
         {/* My DAOs Toggle */}
@@ -178,7 +178,7 @@ export default function DaosPage() {
               <SkeletonCard />
             </>
           ) : daos.length === 0 ? (
-            <div className="col-span-full py-16 text-center text-zinc-500 bg-zinc-900/30 border border-zinc-800/50 rounded-2xl border-dashed">
+            <div className="col-span-full py-16 text-center text-zinc-400 bg-zinc-900/30 border border-zinc-800/50 rounded-2xl border-dashed">
               No DAOs found matching your criteria.
             </div>
           ) : (
@@ -191,7 +191,7 @@ export default function DaosPage() {
                   <CardContent className="p-6 flex flex-col h-full">
                     <div className="flex justify-between items-start mb-4">
                       <div className="w-12 h-12 rounded-lg bg-zinc-800 flex items-center justify-center border border-white/5 group-hover:border-accent/50 transition-colors">
-                        <ShieldCheck className="text-accent w-7 h-7" />
+                        <ShieldCheck className="text-accent w-7 h-7" aria-hidden="true" />
                       </div>
                       <div className="px-2.5 py-1 rounded bg-green-500/15 border border-green-500/30 text-green-500 text-sm font-medium flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
@@ -217,7 +217,7 @@ export default function DaosPage() {
                       </div>
                       <div className="flex items-center text-xs font-medium text-zinc-400 group-hover:text-accent transition-colors gap-1">
                         <span>Browse Proposals</span>
-                        <ArrowRight className="transition-all duration-200 translate-x-0 group-hover:translate-x-1 w-4 h-4" />
+                        <ArrowRight className="transition-all duration-200 translate-x-0 group-hover:translate-x-1 w-4 h-4" aria-hidden="true" />
                       </div>
                     </div>
                   </CardContent>

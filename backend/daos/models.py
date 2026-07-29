@@ -19,6 +19,12 @@ class DaoCache(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     last_synced_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        from utils.sanitization import sanitize_markdown_text
+        if self.description:
+            self.description = sanitize_markdown_text(self.description)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 

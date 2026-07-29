@@ -158,7 +158,7 @@ export default function DaoTreasury() {
             <p className="text-2xl font-display font-semibold text-white tabular-nums">
               {stats ? formatGen(stats.all_time_inflows) : "-"}
             </p>
-            <p className="text-xs text-zinc-500 mt-1">GEN</p>
+            <p className="text-xs text-zinc-400 mt-1">GEN</p>
           </CardContent>
         </Card>
         <Card className="col-span-1 lg:col-span-1">
@@ -167,7 +167,7 @@ export default function DaoTreasury() {
             <p className="text-2xl font-display font-semibold text-white tabular-nums">
               {formatGen(dao.total_balance)}
             </p>
-            <p className="text-xs text-zinc-500 mt-1">GEN</p>
+            <p className="text-xs text-zinc-400 mt-1">GEN</p>
           </CardContent>
         </Card>
         <Card className="col-span-1 lg:col-span-1">
@@ -176,7 +176,7 @@ export default function DaoTreasury() {
             <p className="text-2xl font-display font-semibold text-white tabular-nums">
               {stats ? formatGen(stats.total_funding_released) : "-"}
             </p>
-            <p className="text-xs text-zinc-500 mt-1">GEN</p>
+            <p className="text-xs text-zinc-400 mt-1">GEN</p>
           </CardContent>
         </Card>
         <Card className="col-span-1 lg:col-span-1">
@@ -208,7 +208,7 @@ export default function DaoTreasury() {
             </CardHeader>
             <CardContent>
               {chartData.length < 2 ? (
-                <div className="h-[300px] flex items-center justify-center text-zinc-500 flex-col gap-2">
+                <div className="h-[300px] flex items-center justify-center text-zinc-400 flex-col gap-2">
                   <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center">
                     <svg className="w-6 h-6 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
@@ -292,11 +292,11 @@ export default function DaoTreasury() {
             </CardHeader>
             <CardContent>
               {!hasMounted || !isConnected ? (
-                <p className="text-zinc-500 text-sm">Connect wallet to see your voting power.</p>
+                <p className="text-zinc-400 text-sm">Connect wallet to see your voting power.</p>
               ) : (
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-display font-semibold text-white tabular-nums">{formatGen(votingPower)}</span>
-                  <span className="text-zinc-500 font-medium">GEN</span>
+                  <span className="text-zinc-400 font-medium">GEN</span>
                 </div>
               )}
             </CardContent>
@@ -320,7 +320,7 @@ export default function DaoTreasury() {
                 <span className="text-zinc-400 text-sm">Funding Cap</span>
                 <div className="text-right">
                   <div className="text-white font-medium">{Number(dao.funding_cap_bps) / 100}% per proposal</div>
-                  <div className="text-zinc-500 text-xs mt-1">(Max ~{maxGenFunding.toLocaleString(undefined, { maximumFractionDigits: 2 })} GEN)</div>
+                  <div className="text-zinc-400 text-xs mt-1">(Max ~{maxGenFunding.toLocaleString(undefined, { maximumFractionDigits: 2 })} GEN)</div>
                 </div>
               </div>
               <div className="flex justify-between items-center py-2">

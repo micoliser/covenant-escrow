@@ -164,11 +164,11 @@ export default function DaoSettings() {
           href={`/dao/${daoId}`}
           className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-6 group"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" aria-hidden="true" />
           Back to DAO
         </Link>
         <Card className="bg-zinc-900/50 border-zinc-800 text-center py-12">
-          <ShieldAlert className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
+          <ShieldAlert className="w-12 h-12 text-zinc-600 mx-auto mb-4" aria-hidden="true" />
           <h2 className="text-xl font-bold text-white mb-2">Not Authorized</h2>
           <p className="text-zinc-400">
             Only the DAO administrator can access settings.
@@ -297,19 +297,19 @@ export default function DaoSettings() {
         href={`/dao/${daoId}`}
         className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-6 group"
       >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" aria-hidden="true" />
         Back to DAO
       </Link>
 
       <div className="flex items-center gap-3 mb-8">
-        <Settings className="w-8 h-8 text-violet-400" />
+        <Settings className="w-8 h-8 text-violet-400" aria-hidden="true" />
         <h1 className="text-4xl font-display font-bold text-white tracking-tight">
           {dao.name} Settings
         </h1>
       </div>
 
       <Alert className="mb-8 border-yellow-500/50 bg-yellow-500/10 text-yellow-400">
-        <AlertCircle className="h-4 w-4 text-yellow-400" />
+        <AlertCircle className="h-4 w-4 text-yellow-400" aria-hidden="true" />
         <AlertTitle className="text-yellow-400">Important</AlertTitle>
         <AlertDescription className="text-yellow-400">
           Changes apply immediately, including to proposals currently open for
@@ -363,7 +363,7 @@ export default function DaoSettings() {
                   </SelectContent>
                 </Select>
               </div>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-zinc-400">
                 Duration a proposal remains open for voting.
               </p>
             </div>
@@ -380,7 +380,7 @@ export default function DaoSettings() {
                 onChange={(e) => setMaxResubmissions(e.target.value)}
                 className="bg-zinc-950 border-zinc-800 text-white w-full"
               />
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-zinc-400">
                 Maximum times a rejected proposal can be resubmitted.
               </p>
             </div>
@@ -393,7 +393,7 @@ export default function DaoSettings() {
                   <Label className="text-zinc-200 font-medium">Quorum</Label>
                   <Tooltip>
                     <TooltipTrigger className="bg-transparent border-0 p-0 hover:bg-transparent">
-                      <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" />
+                      <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" aria-hidden="true" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs bg-zinc-800 text-zinc-200 border-zinc-700 p-3">
                       The minimum percentage of total DAO voting weight that
@@ -432,7 +432,7 @@ export default function DaoSettings() {
                 step={1}
                 className="py-4"
               />
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-zinc-400">
                 Minimum percentage of total voting weight required to
                 participate.
               </p>
@@ -446,7 +446,7 @@ export default function DaoSettings() {
                   </Label>
                   <Tooltip>
                     <TooltipTrigger className="bg-transparent border-0 p-0 hover:bg-transparent">
-                      <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" />
+                      <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" aria-hidden="true" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs bg-zinc-800 text-zinc-200 border-zinc-700 p-3">
                       The percentage of participating weight that must vote
@@ -487,7 +487,7 @@ export default function DaoSettings() {
                 step={1}
                 className="py-4"
               />
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-zinc-400">
                 Percentage of participating weight required to approve a
                 proposal.
               </p>
@@ -501,7 +501,7 @@ export default function DaoSettings() {
                   </Label>
                   <Tooltip>
                     <TooltipTrigger className="bg-transparent border-0 p-0 hover:bg-transparent">
-                      <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" />
+                      <Info className="w-4 h-4 text-zinc-400 hover:text-zinc-300 transition-colors cursor-help" aria-hidden="true" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs bg-zinc-800 text-zinc-200 border-zinc-700 p-3">
                       The maximum percentage of the DAO&apos;s treasury that a single proposal can request.
@@ -540,7 +540,7 @@ export default function DaoSettings() {
                 step={1}
                 className="py-4"
               />
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-zinc-400">
                 Maximum percentage of the treasury a proposal can request.
               </p>
             </div>
@@ -558,7 +558,7 @@ export default function DaoSettings() {
               onChange={(e) => setMinCriteriaLength(e.target.value)}
               className="bg-zinc-950 border-zinc-800 text-white w-full max-w-[200px]"
             />
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-400">
               Minimum character count required for deliverable criteria.
             </p>
           </div>
@@ -594,10 +594,10 @@ export default function DaoSettings() {
                       {diff.label}
                     </span>
                     <div className="flex items-center gap-2 text-sm font-mono">
-                      <span className="text-zinc-500 line-through">
+                      <span className="text-zinc-400 line-through">
                         {diff.old}
                       </span>
-                      <ArrowLeft className="w-3 h-3 text-zinc-600 rotate-180" />
+                      <ArrowLeft className="w-3 h-3 text-zinc-600 rotate-180" aria-hidden="true" />
                       <span className="text-green-400 font-bold">
                         {diff.new}
                       </span>
@@ -626,8 +626,8 @@ export default function DaoSettings() {
           </Dialog>
 
           {!hasChanges && (
-            <p className="text-sm text-zinc-500 flex items-center gap-2">
-              <Check className="w-4 h-4" /> No changes to save.
+            <p className="text-sm text-zinc-400 flex items-center gap-2">
+              <Check className="w-4 h-4" aria-hidden="true" /> No changes to save.
             </p>
           )}
         </CardFooter>

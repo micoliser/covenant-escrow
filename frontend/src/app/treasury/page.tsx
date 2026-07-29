@@ -70,7 +70,7 @@ export default function GlobalTreasury() {
             <span className="text-6xl md:text-7xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-light to-accent">
               {formatGen(totalValueLocked.toString())}
             </span>
-            <span className="text-2xl text-zinc-500 font-medium">GEN</span>
+            <span className="text-2xl text-zinc-400 font-medium">GEN</span>
           </div>
         </div>
       </header>
@@ -81,7 +81,7 @@ export default function GlobalTreasury() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <ArrowUpRight className="w-5 h-5 text-green-400" />
+                <ArrowUpRight className="w-5 h-5 text-green-400" aria-hidden="true" />
               </div>
               <h3 className="text-zinc-400 font-medium">All Time Balance</h3>
             </div>
@@ -95,7 +95,7 @@ export default function GlobalTreasury() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                <Vault className="w-5 h-5 text-indigo-400" />
+                <Vault className="w-5 h-5 text-indigo-400" aria-hidden="true" />
               </div>
               <h3 className="text-zinc-400 font-medium">Current Balance</h3>
             </div>
@@ -109,7 +109,7 @@ export default function GlobalTreasury() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-orange-400" />
+                <CheckCircle2 className="w-5 h-5 text-orange-400" aria-hidden="true" />
               </div>
               <h3 className="text-zinc-400 font-medium whitespace-nowrap overflow-hidden text-ellipsis">Value Distributed</h3>
             </div>
@@ -123,7 +123,7 @@ export default function GlobalTreasury() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-400" />
+                <Users className="w-5 h-5 text-blue-400" aria-hidden="true" />
               </div>
               <h3 className="text-zinc-400 font-medium">Total Members</h3>
             </div>
@@ -140,7 +140,7 @@ export default function GlobalTreasury() {
         
         {daos.length === 0 ? (
           <div className="text-center py-16 bg-zinc-900/30 border border-zinc-800/50 rounded-2xl border-dashed">
-            <p className="text-zinc-500">No active DAOs found.</p>
+            <p className="text-zinc-400">No active DAOs found.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -153,7 +153,7 @@ export default function GlobalTreasury() {
                 
                 <CardContent className="p-8 relative z-10">
                   <div className="w-12 h-12 rounded-2xl bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <ShieldCheck className="w-6 h-6 text-accent" />
+                    <ShieldCheck className="w-6 h-6 text-accent" aria-hidden="true" />
                   </div>
                   
                   <h3 className="text-2xl font-display font-bold text-white mb-3 group-hover:text-accent-light transition-colors">
@@ -166,18 +166,18 @@ export default function GlobalTreasury() {
                   
                   <div className="space-y-4 mb-8">
                     <div className="flex items-center justify-between py-2 border-b border-zinc-800/50">
-                      <span className="text-zinc-500 text-sm">Treasury</span>
+                      <span className="text-zinc-400 text-sm">Treasury</span>
                       <div className="flex items-center gap-1.5 text-white font-medium">
-                        <Coins className="w-4 h-4 text-zinc-400" />
+                        <Coins className="w-4 h-4 text-zinc-400" aria-hidden="true" />
                         {formatGen(dao.total_balance)} GEN
                       </div>
                     </div>
                     <div className="flex items-center justify-between py-2 border-b border-zinc-800/50">
-                      <span className="text-zinc-500 text-sm">Proposals</span>
+                      <span className="text-zinc-400 text-sm">Proposals</span>
                       <span className="text-white font-medium">{dao.proposal_count}</span>
                     </div>
                     <div className="flex items-center justify-between py-2 border-b border-zinc-800/50">
-                      <span className="text-zinc-500 text-sm">Members</span>
+                      <span className="text-zinc-400 text-sm">Members</span>
                       <span className="text-white font-medium">{dao.member_count !== undefined ? dao.member_count : "-"}</span>
                     </div>
                   </div>
@@ -187,7 +187,7 @@ export default function GlobalTreasury() {
                     onClick={() => router.push(`/dao/${dao.dao_id}/treasury`)}
                   >
                     View Treasury
-                    <ArrowRight className="w-4 h-4 ml-2 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-4 h-4 ml-2 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" aria-hidden="true" />
                   </Button>
                 </CardContent>
               </Card>

@@ -87,11 +87,11 @@ export default async function Home() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/daos" className={cn(buttonVariants({ variant: "default" }), "bg-accent hover:bg-accent/90 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] w-full sm:w-auto px-6 py-6")}>
                   Explore DAOs
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
                 </Link>
                 <Link href="https://github.com/micoliser/covenant-escrow" target="_blank" className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto px-6 py-6 border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700")}>
                   View Github
-                  <Cpu className="w-4 h-4 ml-2" />
+                  <Cpu className="w-4 h-4 ml-2" aria-hidden="true" />
                 </Link>
               </div>
             </div>
@@ -260,7 +260,7 @@ export default async function Home() {
                 aria-label="List View"
                 className="p-2 rounded border border-zinc-700 hover:bg-zinc-800 text-zinc-400 transition-colors"
               >
-                <Grid className="w-5 h-5" />
+                <Grid className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -275,7 +275,7 @@ export default async function Home() {
                   <CardContent className="p-6 flex flex-col h-full">
                     <div className="flex justify-between items-start mb-4">
                       <div className="w-12 h-12 rounded-lg bg-zinc-800 flex items-center justify-center border border-white/5 group-hover:border-accent/50 transition-colors">
-                        <ShieldCheck className="text-accent w-7 h-7" />
+                        <ShieldCheck className="text-accent w-7 h-7" aria-hidden="true" />
                       </div>
                       <div className="px-2 py-1 rounded bg-green-500/15 border border-green-500/30 text-green-500 text-sm font-medium flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
@@ -299,7 +299,7 @@ export default async function Home() {
                           {formatGen(dao.total_balance)} GEN
                         </div>
                       </div>
-                      <ArrowRight className="text-zinc-400 group-hover:text-accent transition-all duration-200 translate-x-0 group-hover:translate-x-1 w-5 h-5" />
+                      <ArrowRight className="text-zinc-400 group-hover:text-accent transition-all duration-200 translate-x-0 group-hover:translate-x-1 w-5 h-5" aria-hidden="true" />
                     </div>
                   </CardContent>
                 </Link>
@@ -327,7 +327,7 @@ export default async function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/daos" className={cn(buttonVariants({ variant: "default" }), "w-full sm:w-auto bg-accent hover:bg-accent-hover text-white font-display font-medium px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(167,139,250,0.3)]")}>
               Browse DAOs
-              <ArrowRight className="w-5 h-5 ml-2" />
+              <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
             </Link>
           </div>
         </ScrollReveal>

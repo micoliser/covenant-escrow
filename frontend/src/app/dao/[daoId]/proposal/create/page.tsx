@@ -254,7 +254,7 @@ export default function CreateProposal() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent" aria-hidden="true" />
       </div>
     );
   }
@@ -265,7 +265,7 @@ export default function CreateProposal() {
         href={`/dao/${daoId}`}
         className="inline-flex items-center text-sm font-medium text-zinc-400 hover:text-white transition-colors mb-2"
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
+        <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
         Back to {dao?.name || 'DAO'}
       </Link>
 
@@ -285,10 +285,10 @@ export default function CreateProposal() {
                   ? "bg-accent text-white" 
                   : s === step 
                     ? "bg-zinc-800 border-2 border-accent text-white" 
-                    : "bg-zinc-900 border-2 border-zinc-800 text-zinc-500"
+                    : "bg-zinc-900 border-2 border-zinc-800 text-zinc-400"
               )}
             >
-              {s < step ? <CheckCircle2 className="h-6 w-6" /> : s}
+              {s < step ? <CheckCircle2 className="h-6 w-6" aria-hidden="true" /> : s}
             </div>
             <span className={cn(
               "absolute -bottom-6 text-xs font-medium whitespace-nowrap",
@@ -311,7 +311,7 @@ export default function CreateProposal() {
       
       {successStatus && (
         <div className="bg-accent/10 border border-accent/20 text-accent px-4 py-3 rounded-xl text-sm flex items-center mt-8">
-          <Loader2 className="h-4 w-4 animate-spin mr-3" />
+          <Loader2 className="h-4 w-4 animate-spin mr-3" aria-hidden="true" />
           {successStatus}
         </div>
       )}
@@ -326,8 +326,9 @@ export default function CreateProposal() {
             <form onSubmit={handleStep1}>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-300">Proposal Title</label>
+                  <label htmlFor="proposal-title" className="text-sm font-medium text-zinc-300">Proposal Title</label>
                   <Input
+                    id="proposal-title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Redesign DAO Landing Page"
@@ -336,8 +337,9 @@ export default function CreateProposal() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-300">Detailed Description</label>
+                  <label htmlFor="proposal-description" className="text-sm font-medium text-zinc-300">Detailed Description</label>
                   <Textarea
+                    id="proposal-description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Explain the problem you are solving and why it benefits the DAO..."
@@ -348,7 +350,7 @@ export default function CreateProposal() {
               </CardContent>
               <CardFooter className="flex justify-end border-t border-zinc-800/50 pt-6 mt-6">
                 <Button type="submit" disabled={isSaving} className="bg-accent hover:bg-accent/90 text-white min-w-32">
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden="true" /> : null}
                   Next Step
                 </Button>
               </CardFooter>
@@ -365,13 +367,14 @@ export default function CreateProposal() {
             <form onSubmit={handleStep2}>
               <CardContent className="space-y-6">
                 <div className="bg-accent/10 border border-accent/20 p-4 rounded-xl flex gap-3 text-accent text-sm">
-                  <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                  <Info className="h-5 w-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <p>Be extremely specific. Your funds will be locked in escrow and only released if AI validators confirm you met these exact criteria.</p>
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-300">Acceptance Criteria</label>
+                  <label htmlFor="deliverable-criteria" className="text-sm font-medium text-zinc-300">Acceptance Criteria</label>
                   <Textarea
+                    id="deliverable-criteria"
                     value={deliverableCriteria}
                     onChange={(e) => setDeliverableCriteria(e.target.value)}
                     placeholder="1. Provide a Figma link with the new designs.&#10;2. Implement responsive HTML/Tailwind templates.&#10;3. Deploy to a Vercel preview environment."
@@ -397,7 +400,7 @@ export default function CreateProposal() {
                   disabled={isSaving || (dao && deliverableCriteria.length < dao.min_criteria_length) || false} 
                   className="bg-accent hover:bg-accent/90 text-white min-w-32"
                 >
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden="true" /> : null}
                   Next Step
                 </Button>
               </CardFooter>
@@ -414,9 +417,10 @@ export default function CreateProposal() {
             <form onSubmit={handleStep3}>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-300">Requested Amount (GEN)</label>
+                  <label htmlFor="requested-amount" className="text-sm font-medium text-zinc-300">Requested Amount (GEN)</label>
                   <div className="relative">
                     <Input
+                      id="requested-amount"
                       type="number"
                       step="0.0001"
                       min="0"
@@ -446,15 +450,17 @@ export default function CreateProposal() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-300">Target Deadline</label>
+                  <label htmlFor="target-deadline" className="text-sm font-medium text-zinc-300">Target Deadline</label>
                   <Input
+                    id="target-deadline"
                     type="datetime-local"
+                    min={new Date().toISOString().slice(0, 16)}
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
                     required
                     className="bg-zinc-950/50 border-zinc-800 py-6"
                   />
-                  <p className="text-xs text-zinc-500 mt-2">
+                  <p className="text-xs text-zinc-400 mt-2">
                     If you do not deliver by this date, the DAO may initiate a reclaim process to recover the escrowed funds.
                   </p>
                 </div>
@@ -464,7 +470,7 @@ export default function CreateProposal() {
                   Back
                 </Button>
                 <Button type="submit" disabled={isSaving} className="bg-accent hover:bg-accent/90 text-white min-w-32">
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden="true" /> : null}
                   Next Step
                 </Button>
               </CardFooter>
@@ -532,7 +538,7 @@ export default function CreateProposal() {
                   disabled={!isConfirmed || isSaving || isLocked}
                   className="bg-accent hover:bg-accent-hover text-white min-w-32"
                 >
-                  {(isSaving || isLocked) && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  {(isSaving || isLocked) && <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden="true" />}
                   Submit to Blockchain
                 </Button>
               </CardFooter>
