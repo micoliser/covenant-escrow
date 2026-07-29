@@ -111,7 +111,7 @@ class VerifySignatureView(APIView):
             raw_refresh,
             max_age=7 * 24 * 60 * 60,
             httponly=True,
-            samesite='Lax',
+            samesite='Lax' if settings.DEBUG else 'None',
             secure=not settings.DEBUG
         )
         return response
@@ -162,7 +162,7 @@ class RefreshTokenView(APIView):
             new_raw_refresh,
             max_age=7 * 24 * 60 * 60,
             httponly=True,
-            samesite='Lax',
+            samesite='Lax' if settings.DEBUG else 'None',
             secure=not settings.DEBUG
         )
         return response
@@ -182,7 +182,7 @@ class LogoutView(APIView):
             token_obj.revoked = True
             token_obj.save(update_fields=['revoked'])
             response = Response({"status": "logged out"})
-            response.delete_cookie('refresh_token', samesite='Lax')
+            response.delete_cookie('refresh_token', samesite='Lax' if settings.DEBUG else 'None')
             return response
         except RefreshToken.DoesNotExist:
             return Response({"error": "Invalid refresh token"}, status=status.HTTP_400_BAD_REQUEST)
