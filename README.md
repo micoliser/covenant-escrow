@@ -155,6 +155,7 @@ covenant-escrow/
 
 - **No Treasury Withdrawal Path:** By design, deposits into a DAO's treasury are one-way. There is currently no mechanism to withdraw unallocated funds back to the original depositors.
 - **Network Environment:** The application currently points to GenLayer's `studionet` as its production environment, rather than `testnet-Bradbury` or mainnet, due to the current phase of network rollout.
+- **Wallet Support:** Wallet sign-in and transactions are currently optimized for and only support **MetaMask**. Other wallets may experience unexpected behavior during the SIWE flow or GenLayer transactions.
 
 ---
 
